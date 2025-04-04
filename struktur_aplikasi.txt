@@ -1,0 +1,148 @@
+Folder PATH listing
+Volume serial number is E2A3-DDD3
+C:.
+|   .env.local
+|   .gitignore
+|   eslint.config.mjs
+|   firebase-adminsdk.json
+|   firebase.json
+|   firestore.indexes.json
+|   firestore.rules
+|   middleware.js
+|   next-env.d.ts
+|   next.config.js
+|   next.config.ts
+|   package-lock.json
+|   package.json
+|   README.md
+|   setRole.js
+|   struktur_aplikasi.txt
+|   tsconfig.json
+|   
++---.next
++---app
+|   |   favicon.ico
+|   |   globals.css
+|   |   layout.js
+|   |   page.js
+|   |   page.module.css
+|   |   
+|   +---dashboard
+|   |       page.js
+|   |       
+|   +---monitoring
+|   |       page.js
+|   |       
+|   +---pengaturan
+|   |   +---pengguna
+|   |   |       page.js
+|   |   |       
+|   |   \---sumberDana
+|   |           page.js
+|   |           
+|   \---transaksi
+|           page.js
+|           TambahTransaksi.js
+|           
++---bootstrap
+|   +---css
+|   |       bootstrap-grid.css
+|   |       bootstrap-grid.css.map
+|   |       bootstrap-grid.min.css
+|   |       bootstrap-grid.min.css.map
+|   |       bootstrap-grid.rtl.css
+|   |       bootstrap-grid.rtl.css.map
+|   |       bootstrap-grid.rtl.min.css
+|   |       bootstrap-grid.rtl.min.css.map
+|   |       bootstrap-reboot.css
+|   |       bootstrap-reboot.css.map
+|   |       bootstrap-reboot.min.css
+|   |       bootstrap-reboot.min.css.map
+|   |       bootstrap-reboot.rtl.css
+|   |       bootstrap-reboot.rtl.css.map
+|   |       bootstrap-reboot.rtl.min.css
+|   |       bootstrap-reboot.rtl.min.css.map
+|   |       bootstrap-utilities.css
+|   |       bootstrap-utilities.css.map
+|   |       bootstrap-utilities.min.css
+|   |       bootstrap-utilities.min.css.map
+|   |       bootstrap-utilities.rtl.css
+|   |       bootstrap-utilities.rtl.css.map
+|   |       bootstrap-utilities.rtl.min.css
+|   |       bootstrap-utilities.rtl.min.css.map
+|   |       bootstrap.css
+|   |       bootstrap.css.map
+|   |       bootstrap.min.css.map
+|   |       bootstrap.rtl.css
+|   |       bootstrap.rtl.css.map
+|   |       bootstrap.rtl.min.css
+|   |       bootstrap.rtl.min.css.map
+|   |       
+|   \---js
+|           bootstrap.bundle.js
+|           bootstrap.bundle.js.map
+|           bootstrap.bundle.min.js.map
+|           bootstrap.esm.js
+|           bootstrap.esm.js.map
+|           bootstrap.esm.min.js
+|           bootstrap.esm.min.js.map
+|           bootstrap.js
+|           bootstrap.js.map
+|           bootstrap.min.js
+|           bootstrap.min.js.map
+|           
++---components
+|       Layout.js
+|       Navbar.js
+|       protectedRoute.js
+|       saldoCard.js
+|       Sidebar.js
+|       userModal.js
+|       
++---context
+|       IndexedDBContext.js
+|       SaldoContext.js
+|       SumberDanaContext.js
+|       TransaksiContext.js
+|       UserContext.js
+|       
++---lib
+|       auth.js
+|       firebaseConfig.js
+|       firestoreService.js
+|       hitungSaldo.js
+|       localStorage.js
+|       saldoService.js
+|       schema.js
+|       transaksiService.js
+|       userRoutes.js
+|       userService.js
+|       
++---node_modules
++---public
+|   |   404.html
+|   |   file.svg
+|   |   globe.svg
+|   |   index.html
+|   |   next.svg
+|   |   vercel.svg
+|   |   window.svg
+|   |   
+|   +---bootstrap
+|   |   +---css
+|   |   |       bootstrap.min.css
+|   |   |       custom.css
+|   |   |       
+|   |   \---js
+|   |           bootstrap.bundle.min.js
+|   |           
+|   \---images
+|           home.png
+|           starship.jpg
+|           
++---services
+|       indexedDBService.js
+|       saldoService.js
+|       sumberDanaService.js
+|       transaksiService.js
+|       validasiTransaksi.js

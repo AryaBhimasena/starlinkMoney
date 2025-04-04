@@ -65,82 +65,70 @@ export default function LoginPage() {
     }
   };
 
-  return (
-    <div className="home-container">
-      {/* Bagian Kiri: Informasi Aplikasi */}
-      <div className="home-description">
-        <h1>Starlink Money - Solusi Keuangan Modern</h1>
-        <p>
-          Platform yang memudahkan Anda dalam mengelola transaksi keuangan secara real-time,
-          dari transfer, tarik tunai, hingga top-up e-wallet dengan sistem yang efisien dan aman.
-        </p>
+return (
+  <div className="home-container">
+    {/* Bagian Kiri: Informasi Aplikasi */}
+    <div className="home-description">
+      <h1>Starlink Money - Solusi Cerdas untuk Mini Bank</h1>
+      <p>
+        Kelola transaksi usaha jasa mini bank Anda dengan lebih mudah, cepat, dan akurat. 
+        Starlink Money menggantikan pencatatan manual dengan sistem digital yang mendokumentasikan 
+        <strong> seluruh transaksi perbankan dalam satu platform</strong>, memastikan keuangan lebih terorganisir dan transparan.
+      </p>
 
-        <ul>
-          <li>✅ Kemudahan transaksi tanpa batas</li>
-          <li>✅ Keamanan data tingkat tinggi</li>
-          <li>✅ Manajemen saldo real-time</li>
-          <li>✅ Terintegrasi dengan Google Sheets</li>
-        </ul>
-
-        {/* Ruang untuk Gambar */}
-<figure className="app-image" style={{ border: "2px solid red" }}>
-<Image
-  src="/images/home.png" // Wajib pakai "/"
-  alt="Dashboard Keuangan"
-  width={500}
-  height={300}
-  priority
-  unoptimized
-/>
-
-</figure>
-      </div>
-
-      {/* Garis Vertikal Pemisah */}
-      <div className="vertical-line"></div>
-
-      {/* Bagian Kanan: Form Login */}
-      <div className="login-section">
-        <h3 className="login-title">Login</h3>
-
-        {error && <div className="alert alert-danger alert-login">{error}</div>}
-
-        <form onSubmit={handleLogin}>
-          <div className="form-group">
-            <label className="form-label">Email</label>
-            <input
-              type="email"
-              className="form-control"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-              placeholder="Masukkan email"
-              autoFocus
-            />
-          </div>
-
-          <div className="form-group">
-            <label className="form-label">Password</label>
-            <input
-              type="password"
-              className="form-control"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-              placeholder="Masukkan password"
-            />
-          </div>
-
-          <button type="submit" className="btn btn-login">
-            Login
-          </button>
-        </form>
-
-        {/* Informasi Registrasi */}
-        <p className="register-info">
-          Belum punya akun? <a href="/register">Daftar di sini</a>.
-        </p>
+      <div className="feature-list">
+        <p><span className="checkmark">✔</span> Pencatatan transaksi otomatis & akurat</p>
+        <p><span className="checkmark">✔</span> Semua transaksi perbankan terdokumentasi dalam satu platform</p>
+        <p><span className="checkmark">✔</span> Manajemen keuangan modern tanpa buku catatan</p>
+        <p><span className="checkmark">✔</span> Laporan bisnis yang dapat diakses kapan saja & dimana saja</p>
       </div>
     </div>
-  );
+
+    {/* Garis Vertikal Pemisah */}
+    <div className="vertical-line"></div>
+
+    {/* Bagian Kanan: Form Login */}
+    <div className="login-section">
+      <h3 className="login-title">Login</h3>
+
+      {error && <div className="alert alert-danger alert-login">{error}</div>}
+
+      <form onSubmit={handleLogin}>
+        <div className="form-group">
+          <label className="form-label">Email</label>
+          <input
+            type="email"
+            className="form-control"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            required
+            placeholder="Masukkan email"
+            autoFocus
+          />
+        </div>
+
+        <div className="form-group">
+          <label className="form-label">Password</label>
+          <input
+            type="password"
+            className="form-control"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            required
+            placeholder="Masukkan password"
+          />
+        </div>
+
+        <button type="submit" className="btn btn-login">
+          Login
+        </button>
+      </form>
+
+      {/* Informasi Registrasi */}
+      <p className="register-info">
+        Belum punya akun? <a href="/register">Daftar di sini</a>.
+      </p>
+    </div>
+  </div>
+);
 }
