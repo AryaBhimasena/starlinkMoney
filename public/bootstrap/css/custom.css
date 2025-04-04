@@ -1,0 +1,880 @@
+/* Reset Default */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+/* File: globals.css atau style global Anda */
+body {
+  background-color: #e3f2fd ; /* Warna abu pudar */
+}
+
+/* Header styling */
+.header-container {
+  position: fixed;
+  top: 50px; /* Sejajar dengan sidebar */
+  left: 240px; /* Awalnya sejajar sidebar */
+  width: calc(100% - 240px); /* Mengisi sisa lebar setelah sidebar */
+  display: flex;
+  align-items: center;
+  background-color: white; /* Background putih */
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* Bayangan hitam pudar */
+  padding: 15px 20px;
+  font-weight: bold;
+  text-align: left;
+  z-index: 10; /* Pastikan di atas konten lain */
+  border-bottom: 1px solid #ddd; /* Tambahkan garis bawah jika perlu */
+}
+
+/* Styling untuk card content */
+.card-content {
+  background-color: #ffffff; /* Background putih untuk card content */
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* Bayangan hitam pudar */
+  border-radius: 8px;
+  padding: 20px;
+}
+
+/* Styling untuk header card content */
+.card-header {
+  background-color: #e3f2fd; /* Warna latar belakang untuk header */
+  padding: 10px;
+  border-radius: 8px 8px 0 0; /* Membuat sudut kiri dan kanan atas bulat */
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); /* Bayangan halus pada header */
+}
+
+/* Styling untuk isi card content */
+.card-body {
+  padding: 15px;
+}
+
+/* Styling untuk card grafik */
+.card-graph {
+  background-color: #ffffff; /* Background putih untuk card grafik */
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15); /* Bayangan lebih kuat untuk card grafik */
+  border-radius: 8px;
+  padding: 20px;
+}
+
+/* Memberikan sedikit pemisahan antara card content dan card grafik */
+.card-graph h5,
+.card-content h5 {
+  font-weight: bold;
+  font-size: 26px;
+}
+
+.card-content .text-primary, 
+.card-content .text-success, 
+.card-content .text-danger {
+  font-size: 26px; /* Menyesuaikan ukuran teks untuk card content */
+  margin-bottom: 0px;
+}
+
+
+/* ======================= */
+/*    NAVBAR STYLING      */
+/* ======================= */
+.navbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: #1a73e8; /* Warna biru untuk navbar */
+  color: white;
+  padding: 5px 20px; /* Mengurangi padding untuk navbar lebih pendek */
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 50px; /* Menurunkan tinggi navbar */
+  z-index: 1000;
+  box-shadow: 0 4px 8px rgba(26, 115, 232, 0.2); /* Bayangan biru pudar */
+}
+
+.navbar-toggler {
+  background: none;
+  border: none;
+  color: white;
+  font-size: 20px;
+  cursor: pointer;
+  padding: 5px 10px;
+}
+
+
+/* ======================= */
+/*    SIDEBAR STYLING     */
+/* ======================= */
+
+.sidebar {
+  position: fixed;
+  top: 50px;
+  left: 0;
+  height: calc(100vh - 50px);
+  width: 56px; /* Sidebar default kecil */
+  background: #ffffff;
+  color: #5f6368;
+  display: flex;
+  flex-direction: column;
+  padding: 10px;
+  transition: width 0.3s ease-in-out, background 0.3s ease;
+  overflow: hidden;
+  border-right: 1px solid #ddd;
+  z-index: 20;
+}
+
+.sidebar.open {
+  width: 240px;
+}
+
+.sidebar.closed {
+  width: 56px;
+}
+
+.sidebar .nav-link {
+  display: flex;
+  align-items: center;
+  color: #5f6368;
+  text-decoration: none;
+  padding: 10px;
+  border-radius: 4px;
+  transition: 0.3s;
+}
+
+.sidebar .nav-link:hover,
+.sidebar .nav-link.active {
+  background: #f1f3f4;
+  color: #1a73e8;
+}
+
+.sidebar .nav-link.active {
+  background-color: #1a73e8;
+  color: white;
+  box-shadow: 0 4px 6px rgba(26, 115, 232, 0.3);
+  border-radius: 5px;
+}
+
+/* ======================= */
+/*       SUB-MENU         */
+/* ======================= */
+
+/* Wrapper untuk sub-menu */
+.sidebar .nav .sub-menu {
+  padding-left: 20px; /* Indentasi sub-menu */
+  display: none; /* Default tertutup */
+}
+
+/* Menampilkan sub-menu ketika parent aktif */
+.sidebar .nav .nav-item.open .sub-menu {
+  display: block;
+}
+
+/* Styling sub-menu agar mirip dengan menu utama */
+.sidebar .sub-menu .nav-link {
+  padding: 8px 10px;
+  font-size: 0.9rem;
+  border-left: 3px solid transparent; /* Indikator kiri */
+  transition: all 0.3s ease;
+}
+
+/* Tambahan: Menambahkan background untuk sub-menu yang aktif */
+.sidebar .sub-menu .nav-link.active {
+  background: #e8f0fe; /* Warna latar belakang saat aktif */
+  color: #1a73e8;
+  border-left: 3px solid #1a73e8;
+  font-weight: 600;
+}
+
+.sidebar .sub-menu .nav-link:hover {
+  background: #f1f3f4;
+  color: #1a73e8;
+  border-left: 3px solid #1a73e8;
+}
+
+/* Mengatur tampilan sub-menu agar lebih rapi saat sidebar tertutup */
+.sidebar.closed .sub-menu {
+  display: none;
+}
+
+/* ======================= */
+/*    CONTENT STYLING     */
+/* ======================= */
+.content {
+  margin-top: 60px;
+  padding: 20px;
+  transition: margin-left 0.3s ease-in-out;
+  width: 100%;
+}
+
+.content-shrink {
+  margin-left: 80px;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .sidebar.open {
+    width: 80px;
+  }
+
+  .content {
+    margin-left: 80px;
+  }
+}
+
+/* ---------------------------- */
+/* Styling untuk Halaman Login */
+/* ---------------------------- */
+
+/* Layout utama - Full Screen */
+.home-container {
+  display: flex;
+  height: 100vh;
+  width: 100vw;
+  background-color: #f4f4f4;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+  position: fixed;
+  top: 0;
+  left: 0;
+}
+
+/* Bagian kiri - Deskripsi aplikasi */
+.home-description {
+  width: 70%;
+  padding: 40px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  background: #ffffff;
+  color: #333;
+}
+
+.home-description h1 {
+  font-size: 36px;
+  font-weight: bold;
+  margin-bottom: 16px;
+}
+
+.home-description p {
+  font-size: 18px;
+  margin-bottom: 20px;
+}
+
+.home-description ul {
+  padding-left: 20px;
+}
+
+.home-description li {
+  font-size: 16px;
+  margin-bottom: 8px;
+}
+
+/* Ruang gambar */
+.app-image {
+  text-align: center;
+  margin-top: 20px;
+}
+
+.app-image img {
+  width: 80%;
+  max-width: 400px;
+  border-radius: 8px;
+  box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+.app-image figcaption {
+  margin-top: 8px;
+  font-size: 14px;
+  color: #666;
+}
+
+/* Garis pemisah */
+.vertical-line {
+  width: 2px;
+  background-color: #ccc;
+  height: 80%;
+  align-self: center;
+}
+
+/* Bagian kanan - Form Login */
+.login-section {
+  width: 30%;
+  padding: 40px;
+  background: white;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.register-info {
+  margin-top: 12px;
+  text-align: center;
+}
+
+.register-info a {
+  color: #007bff;
+  text-decoration: none;
+}
+
+.register-info a:hover {
+  text-decoration: underline;
+}
+
+/* Responsif */
+@media (max-width: 900px) {
+  .home-container {
+    flex-direction: column;
+  }
+
+  .home-description {
+    width: 100%;
+    text-align: center;
+    padding: 20px;
+  }
+
+  .vertical-line {
+    display: none;
+  }
+
+  .login-section {
+    width: 100%;
+    padding: 20px;
+  }
+}
+
+
+/* ========================= */
+/* User Modal Custom Styling */
+/* ========================= */
+
+.modal-content {
+    border-radius: 12px;
+    border: none;
+    box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1);
+}
+
+.modal-header {
+    background-color: #007bff; /* Warna biru khas tema */
+    color: white;
+    border-top-left-radius: 12px;
+    border-top-right-radius: 12px;
+    padding: 15px;
+}
+
+.modal-title {
+    font-size: 18px;
+    font-weight: bold;
+}
+
+.btn-close {
+    color: white;
+    opacity: 0.8;
+}
+.btn-close:hover {
+    opacity: 1;
+}
+
+.modal-body {
+    padding: 20px;
+    background-color: #f8f9fa; /* Warna background modal */
+}
+
+.form-label {
+    font-weight: 600;
+    color: #333;
+}
+
+.form-control {
+    border-radius: 8px;
+    border: 1px solid #ced4da;
+    padding: 10px;
+    transition: all 0.3s ease;
+}
+
+.form-control:focus {
+    border-color: #007bff;
+    box-shadow: 0px 0px 5px rgba(0, 123, 255, 0.5);
+}
+
+select.form-control {
+    cursor: pointer;
+}
+
+.modal-footer {
+    background-color: #f1f1f1;
+    border-bottom-left-radius: 12px;
+    border-bottom-right-radius: 12px;
+    padding: 15px;
+}
+
+/* Tombol Simpan */
+.btn-primary {
+    background-color: #007bff;
+    border: none;
+    padding: 10px 20px;
+    font-size: 16px;
+    font-weight: 600;
+    border-radius: 8px;
+    transition: all 0.3s ease-in-out;
+}
+
+.btn-primary:hover {
+    background-color: #0056b3;
+}
+
+/* Tombol Close */
+.btn-close-custom {
+    background: none;
+    border: none;
+    font-size: 16px;
+    font-weight: bold;
+    color: #333;
+    transition: all 0.3s ease;
+}
+
+.btn-close-custom:hover {
+    color: #ff4d4d;
+}
+
+/* Responsive */
+@media (max-width: 576px) {
+    .modal-dialog {
+        max-width: 90%;
+    }
+
+    .modal-body {
+        padding: 15px;
+    }
+
+    .btn-primary {
+        width: 100%;
+    }
+}
+
+/* ======================= */
+/*    SUMBER DANA PAGES    */
+/* ======================= */
+
+.sumber-dana-container {
+  padding: 20px;
+  background-color: #f8f9fa;
+}
+
+.title {
+  font-size: 24px;
+  font-weight: bold;
+  margin-bottom: 20px;
+}
+
+.sumber-dana-card {
+  background: #fff;
+  padding: 15px;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.btn-add {
+  background-color: #28a745;
+  color: white;
+  padding: 10px 15px;
+  border: none;
+  cursor: pointer;
+  border-radius: 5px;
+  margin-bottom: 15px;
+}
+
+.sumber-dana-table {
+  width: 100%;
+  border-collapse: collapse;
+  background: #fff;
+}
+
+.sumber-dana-table th, .sumber-dana-table td {
+  padding: 10px;
+  border: 1px solid #ddd;
+  text-align: left;
+}
+
+.btn-edit {
+  background-color: #ffc107;
+  color: black;
+  padding: 5px 10px;
+  border: none;
+  cursor: pointer;
+  border-radius: 5px;
+  margin-right: 5px;
+}
+
+.btn-delete {
+  background-color: #dc3545;
+  color: white;
+  padding: 5px 10px;
+  border: none;
+  cursor: pointer;
+  border-radius: 5px;
+}
+
+/* Styling untuk memastikan label dan input sejajar */
+.modal-body .row {
+  margin-bottom: 10px;
+}
+
+.modal-body label {
+  display: block;
+  width: 100%;
+  font-weight: bold;
+  margin-bottom: 5px;
+}
+
+.modal-body .form-control,
+.modal-body .form-select {
+  width: 100%;
+}
+
+/* Styling untuk tab */
+.nav-tabs .nav-item {
+  margin-right: 5px;
+}
+
+.nav-tabs .nav-link {
+  padding: 8px 12px;
+  border-radius: 5px;
+}
+
+.nav-tabs .nav-link.active {
+  background-color: #007bff;
+  color: white;
+}
+
+/* Responsif */
+@media (max-width: 768px) {
+  .modal-dialog {
+    max-width: 95%;
+  }
+}
+
+/* Custom CSS untuk halaman login */
+.login-container {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background: rgba(0, 0, 0, 0.85); /* Latar belakang semi-transparan */
+  z-index: 9999; /* Menutupi elemen lain */
+}
+
+.login-card {
+  background: white;
+  padding: 2rem;
+  border-radius: 10px;
+  box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.2);
+  width: 100%;
+  max-width: 400px;
+}
+
+.login-title {
+  text-align: center;
+  margin-bottom: 1.5rem;
+  font-size: 1.5rem;
+  font-weight: bold;
+}
+
+.form-group {
+  margin-bottom: 1rem;
+}
+
+.form-label {
+  font-weight: bold;
+}
+
+.form-control {
+  width: 100%;
+  padding: 0.75rem;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  font-size: 1rem;
+}
+
+.btn-login {
+  width: 100%;
+  padding: 0.75rem;
+  background: #007bff;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: background 0.3s ease;
+}
+
+.btn-login:hover {
+  background: #0056b3;
+}
+
+.alert-login {
+  text-align: center;
+  font-size: 0.9rem;
+}
+/* ===== Custom Styles for Tables ===== */
+.table-responsive {
+    overflow-x: auto; /* Scrollbar horizontal jika tabel tidak cukup */
+    max-width: 100%;
+}
+
+.table {
+    white-space: nowrap; /* Mencegah teks terpotong ke baris berikutnya */
+    border-collapse: collapse; /* Menyatukan border */
+    width: 100%;
+}
+
+th, td {
+    padding: 12px;
+    text-align: left;
+    vertical-align: middle;
+    border: 1px solid #dee2e6;
+}
+
+th {
+    background-color: #343a40;
+    color: white;
+    font-weight: bold;
+    text-transform: uppercase;
+}
+
+tr:nth-child(even) {
+    background-color: #f8f9fa;
+}
+
+tr:hover {
+    background-color: #e9ecef;
+}
+
+/* ===== Button Styles ===== */
+.btn-sm {
+    padding: 6px 12px;
+    font-size: 0.875rem;
+    border-radius: 4px;
+}
+
+/* Flexbox Utilities */
+.d-flex.justify-content-between {
+    flex-wrap: wrap;
+    align-items: center;
+}
+
+/* ===== Saldo Table Styles ===== */
+.saldo-table {
+    width: auto;
+    max-width: 100%;
+    margin: 0 auto;
+    border-collapse: collapse;
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+    white-space: nowrap;
+}
+
+.saldo-table th, .saldo-table td {
+    padding: 12px;
+    text-align: left;
+    border-bottom: 1px solid #ddd;
+    white-space: nowrap;
+}
+
+.saldo-table th {
+    background-color: #3a3f44;
+    color: white;
+    font-weight: bold;
+    text-transform: uppercase;
+}
+
+.saldo-table tr:nth-child(even) {
+    background-color: #f9f9f9;
+}
+
+.saldo-table tr:hover {
+    background-color: #f1f1f1;
+    transition: background 0.2s ease-in-out;
+}
+
+/* ===== Transaksi Table Styles ===== */
+.transaksi-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 20px;
+    margin-top: 20px;
+}
+
+.transaksi-wrapper {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 20px;
+    width: 100%;
+}
+
+.saldo-card {
+    flex: 1;
+    min-width: 250px;
+    max-width: 300px;
+}
+
+.table-wrapper {
+    flex: 2;
+    min-width: 600px;
+    max-width: 100%;
+    overflow-x: auto;
+}
+
+.transaksi-table {
+    width: auto;
+    max-width: 100%;
+    border-collapse: collapse;
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+    white-space: nowrap;
+}
+
+.transaksi-table th, .transaksi-table td {
+    padding: 12px;
+    text-align: left;
+    border-bottom: 1px solid #ddd;
+    white-space: nowrap;
+}
+
+.transaksi-table th {
+    background-color: #3a3f44;
+    color: white;
+    font-weight: bold;
+    text-transform: uppercase;
+}
+
+.transaksi-table tr:nth-child(even) {
+    background-color: #f9f9f9;
+}
+
+.transaksi-table tr:hover {
+    background-color: #f1f1f1;
+    transition: background 0.2s ease-in-out;
+}
+
+/* ===== Responsive Styles ===== */
+@media (max-width: 768px) {
+    .transaksi-wrapper {
+        flex-direction: column;
+        align-items: center;
+    }
+
+    .saldo-card {
+        max-width: 100%;
+    }
+
+    .table-wrapper {
+        max-width: 100%;
+        overflow-x: auto;
+    }
+}
+
+.popup-card {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  background: #4caf50;
+  color: white;
+  padding: 15px 20px;
+  border-radius: 8px;
+  box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
+  z-index: 1000;
+  animation: fadeIn 0.3s ease-in-out;
+}
+
+.popup-card button {
+  background: none;
+  border: none;
+  color: white;
+  font-weight: bold;
+  margin-left: 15px;
+  cursor: pointer;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(-10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* ===== Pengguna Table Styles ===== */
+.users-table {
+    width: 100%;
+    max-width: 100%;
+    border-collapse: collapse;
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+    white-space: nowrap;
+}
+
+.users-table th, .users-table td {
+    padding: 12px;
+    text-align: left;
+    border-bottom: 1px solid #ddd;
+    white-space: nowrap;
+}
+
+.users-table th {
+    background-color: #3a3f44;
+    color: white;
+    font-weight: bold;
+    text-transform: uppercase;
+}
+
+.users-table tr:nth-child(even) {
+    background-color: #f9f9f9;
+}
+
+.users-table tr:hover {
+    background-color: #f1f1f1;
+    transition: background 0.2s ease-in-out;
+}
+
+/* Header dengan tombol di kanan */
+.header-container {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-bottom: 15px;
+    border-bottom: 2px solid #ddd;
+}
+
+/* Tombol Tambah Pengguna */
+.header-container .btn-primary {
+    font-size: 14px;
+    font-weight: bold;
+    padding: 8px 16px;
+}
+
+/* Loading Overlay */
+.loading-overlay {
+    text-align: center;
+    font-size: 16px;
+    font-weight: bold;
+    color: #007bff;
+    margin: 20px 0;
+}
+
+/* Responsiveness */
+@media (max-width: 768px) {
+    .users-wrapper {
+        flex-direction: column;
+        align-items: center;
+    }
+
+    .table-wrapper {
+        max-width: 100%;
+        overflow-x: auto;
+    }
+}

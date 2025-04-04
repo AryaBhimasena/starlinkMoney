@@ -1,0 +1,66 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Rules untuk koleksi Users
+    match /users/{userId} {
+      allow read, write: if request.auth != null &&
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == "superadmin";
+      
+      allow read, update: if request.auth != null && request.auth.uid == userId;
+    }
+
+    // Rules untuk koleksi Saldo
+    match /saldo/{saldoId} {
+      allow read: if request.auth != null &&
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.entitasId == resource.data.entitasId;
+
+      allow create: if request.auth != null &&
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == "superadmin" &&
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.entitasId == request.resource.data.entitasId;
+
+      allow update, delete: if request.auth != null &&
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == "superadmin" &&
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.entitasId == resource.data.entitasId;
+    }
+
+
+		// Rules untuk koleksi Transaksi
+    match /transaksi/{transaksiId} {
+      allow read: if request.auth != null &&
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.entitasId == resource.data.entitasId;
+
+      allow create: if request.auth != null &&
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role in ["admin", "superadmin"] &&
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.entitasId == request.resource.data.entitasId;
+
+      allow delete: if request.auth != null &&
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == "superadmin" &&
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.entitasId == resource.data.entitasId;
+
+      allow update: if request.auth != null &&
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role in ["superadmin"] &&
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.entitasId == resource.data.entitasId;
+    }
+
+
+    // Rules untuk koleksi Sumber Dana
+    match /sumber_dana/{sumberDanaId} {
+        allow read: if request.auth != null &&
+          get(/databases/$(database)/documents/users/$(request.auth.uid)).data.entitasId == resource.data.entitasId;
+
+        allow create: if request.auth != null &&
+          get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == "superadmin" &&
+          get(/databases/$(database)/documents/users/$(request.auth.uid)).data.entitasId == request.resource.data.entitasId;
+
+        allow update: if request.auth != null &&
+          get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == "superadmin" &&
+          get(/databases/$(database)/documents/users/$(request.auth.uid)).data.entitasId == resource.data.entitasId;
+
+        allow delete: if request.auth != null &&
+          get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == "superadmin" &&
+          get(/databases/$(database)/documents/users/$(request.auth.uid)).data.entitasId == resource.data.entitasId;
+    }
+
+  }
+}
