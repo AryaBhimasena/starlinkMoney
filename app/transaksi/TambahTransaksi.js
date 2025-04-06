@@ -126,18 +126,33 @@ const handleSubmit = async (e) => {
     return;
   }
 
-  // Menyiapkan data transaksi
+  // Tentukan jenisTransaksi otomatis berdasarkan tab
+  let jenisTransaksi = "Transfer";
+  if (activeTab === "tab1") jenisTransaksi = form.jenisTransaksi || "Transfer";
+  else if (activeTab === "tab2") jenisTransaksi = "Top Up Pulsa / Listrik";
+  else if (activeTab === "tab3") jenisTransaksi = "Top Up E-Wallet";
+
+  // Siapkan data transaksi
   const transaksiData = {
     ...form,
     entitasId,
+    jenisTransaksi,
     createdAt: Date.now(),
+	profit: Number(form.tarif),
   };
+
+  // Bersihkan field yang tidak relevan berdasarkan tab
+  if (activeTab === "tab2") {
+    delete transaksiData.penerima;
+    delete transaksiData.noRekening;
+  }
+  if (activeTab === "tab3") {
+    delete transaksiData.noRekening;
+  }
 
   setLoading(true);
   try {
     console.log("📩 Menyimpan transaksi ke store transaksi...");
-
-    // 🚨 Debug sebelum menjalankan addSingleTransaksi
     console.log("🔍 Data transaksi yang akan disimpan:", transaksiData);
 
     const transaksiBaru = await addSingleTransaksi(transaksiData);
@@ -157,8 +172,6 @@ const handleSubmit = async (e) => {
     console.log("✅ Saldo berhasil diperbarui!");
 
     setSuccessMessage("✅ Transaksi berhasil ditambahkan!");
-
-    // 🔔 Tampilkan popup notifikasi
     setShowPopup(true);
     setTimeout(() => setShowPopup(false), 3000);
 

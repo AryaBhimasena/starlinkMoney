@@ -725,28 +725,43 @@ export const getTotalProfit = async () => {
     const db = await openDB();
     const tx = db.transaction("transaksi", "readonly");
     const store = tx.objectStore("transaksi");
-    
-    let transaksi = await store.getAll();
 
-    // **Pastikan `transaksi` adalah array**
-    if (!Array.isArray(transaksi)) {
-      console.warn("Data transaksi bukan array, mengubah menjadi array kosong.");
-      transaksi = []; // Jika bukan array, ubah menjadi array kosong
-    }
+    const now = new Date();
+    const bulanIni = now.getMonth() + 1;
+    const tahunIni = now.getFullYear();
 
-    const bulanIni = new Date().getMonth() + 1;
-    const tahunIni = new Date().getFullYear();
+    let total = 0;
 
-    const totalProfit = transaksi.reduce((total, item) => {
-      const tgl = new Date(item.tanggal);
+    return new Promise((resolve, reject) => {
+      const request = store.openCursor();
 
-      if (tgl.getMonth() + 1 === bulanIni && tgl.getFullYear() === tahunIni) {
-        return total + (parseInt(item.profit) || 0);
-      }
-      return total;
-    }, 0);
+      request.onsuccess = (event) => {
+        const cursor = event.target.result;
+        if (cursor) {
+          const item = cursor.value;
 
-    return totalProfit;
+          if (item.tanggal) {
+            const [yearStr, monthStr] = item.tanggal.split("-");
+            const itemBulan = parseInt(monthStr);
+            const itemTahun = parseInt(yearStr);
+
+            if (itemBulan === bulanIni && itemTahun === tahunIni) {
+              const profit = parseInt(item.profit ?? item.tarif ?? 0) || 0;
+              total += profit;
+            }
+          }
+
+          cursor.continue();
+        } else {
+          resolve(total);
+        }
+      };
+
+      request.onerror = (event) => {
+        console.error("Gagal membaca data transaksi:", event.target.error);
+        reject(0);
+      };
+    });
   } catch (error) {
     console.error("Gagal menghitung total profit:", error);
     return 0;
@@ -828,7 +843,9 @@ export async function getTransaksiHarian() {
             };
           }
 
-          const profit = parseInt(item.hargaJual || 0) - parseInt(item.hargaModal || 0);
+          // Gunakan profit jika ada, jika tidak gunakan tarif sebagai fallback
+          const profit = parseInt(item.profit ?? item.tarif ?? 0);
+
           groupedData[tanggal].transaksi += 1;
           groupedData[tanggal].profit += isNaN(profit) ? 0 : profit;
         });

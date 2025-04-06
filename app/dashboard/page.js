@@ -50,7 +50,19 @@ export default function HomePage() {
         setTotalSaldo(saldo);
 
         const data = await getTransaksiHarian();
-        setDataHarian(data);
+
+        // Perbaikan: pastikan setiap item memiliki nilai profit
+        const cleanData = data.map((item) => {
+          const calculatedProfit =
+            parseInt(item.hargaJual || 0) - parseInt(item.hargaModal || 0);
+
+          return {
+            ...item,
+            profit: item.profit ?? (isNaN(calculatedProfit) ? 0 : calculatedProfit),
+          };
+        });
+
+        setDataHarian(cleanData);
       } catch (error) {
         console.error("Error fetching dashboard data:", error);
       }
@@ -75,7 +87,9 @@ export default function HomePage() {
                 <h5>Total Transaksi</h5>
               </div>
               <div className="card-body">
-                <p className="text-primary fw-bold">{jumlahTransaksi} Transaksi</p>
+                <p className="text-primary fw-bold">
+                  {jumlahTransaksi} Transaksi
+                </p>
               </div>
             </div>
           </div>
@@ -86,7 +100,9 @@ export default function HomePage() {
                 <h5>Total Omzet</h5>
               </div>
               <div className="card-body">
-                <p className="text-success fw-bold">{formatRupiah(totalOmzet)}</p>
+                <p className="text-success fw-bold">
+                  {formatRupiah(totalOmzet)}
+                </p>
               </div>
             </div>
           </div>
@@ -97,7 +113,9 @@ export default function HomePage() {
                 <h5>Total Profit</h5>
               </div>
               <div className="card-body">
-                <p className="text-success fw-bold">{formatRupiah(totalProfit)}</p>
+                <p className="text-success fw-bold">
+                  {formatRupiah(totalProfit)}
+                </p>
               </div>
             </div>
           </div>
@@ -108,7 +126,9 @@ export default function HomePage() {
                 <h5>Total Saldo</h5>
               </div>
               <div className="card-body">
-                <p className="text-danger fw-bold">{formatRupiah(totalSaldo)}</p>
+                <p className="text-danger fw-bold">
+                  {formatRupiah(totalSaldo)}
+                </p>
               </div>
             </div>
           </div>
@@ -121,7 +141,12 @@ export default function HomePage() {
               <h5 className="mb-3">Transaksi Bulan Ini</h5>
               <ResponsiveContainer width="100%" height={300}>
                 <BarChart data={dataHarian}>
-                  <XAxis dataKey="tanggal" interval={1} tick={{ fontSize: 11 }} tickLine={false} />
+                  <XAxis
+                    dataKey="tanggal"
+                    interval={1}
+                    tick={{ fontSize: 11 }}
+                    tickLine={false}
+                  />
                   <YAxis />
                   <Tooltip />
                   <CartesianGrid stroke="#eee" strokeDasharray="5 5" />
@@ -136,7 +161,12 @@ export default function HomePage() {
               <h5 className="mb-3">Profit Bulan Ini</h5>
               <ResponsiveContainer width="100%" height={300}>
                 <BarChart data={dataHarian}>
-                  <XAxis dataKey="tanggal" interval={1} tick={{ fontSize: 11 }} tickLine={false} />
+                  <XAxis
+                    dataKey="tanggal"
+                    interval={1}
+                    tick={{ fontSize: 11 }}
+                    tickLine={false}
+                  />
                   <YAxis />
                   <Tooltip formatter={(value) => formatRupiah(value)} />
                   <CartesianGrid stroke="#eee" strokeDasharray="5 5" />

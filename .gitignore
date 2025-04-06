@@ -42,3 +42,5 @@ next-env.d.ts
 
 # Ignore Firebase Admin SDK credentials
 firebase-adminsdk.json
+
+.vercel

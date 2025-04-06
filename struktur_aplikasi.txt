@@ -4,14 +4,11 @@ C:.
 |   .env.local
 |   .gitignore
 |   eslint.config.mjs
-|   firebase-adminsdk.json
 |   firebase.json
 |   firestore.indexes.json
 |   firestore.rules
 |   middleware.js
-|   next-env.d.ts
 |   next.config.js
-|   next.config.ts
 |   package-lock.json
 |   package.json
 |   README.md

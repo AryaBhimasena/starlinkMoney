@@ -116,7 +116,7 @@ const Sidebar = ({ isOpen }) => {
                 </Link>
               </li>
               <li className="nav-item">
-                <Link href="/pengaturan/nama-toko" className={`nav-link sidebar-link ${pathname === "/pengaturan/nama-toko" ? "active" : ""}`}>
+                <Link href="/pengaturan/detail-toko" className={`nav-link sidebar-link ${pathname === "/pengaturan/detail-toko" ? "active" : ""}`}>
                   Identitas Toko
                 </Link>
               </li>
