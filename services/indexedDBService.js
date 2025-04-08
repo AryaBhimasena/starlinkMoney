@@ -4,8 +4,8 @@ import { v4 as uuidv4 } from "uuid"; // Pastikan uuid sudah diinstall
 import { createUserWithEmailAndPassword, deleteUser } from 'firebase/auth';
 
 const DB_NAME = "StarlinkMoneyDB";
-const DB_VERSION = 1;
-const STORE_NAMES = ["userData", "transaksi", "sumber_dana", "saldo", "allUserData"];
+const DB_VERSION = 2;
+const STORE_NAMES = ["userData", "transaksi", "sumber_dana", "saldo", "allUserData", "token", "token_riwayat"];
 const collectionName = ["transaksi"];
 const EVENT_NAME = "indexedDBUpdated";
 
@@ -157,7 +157,7 @@ export async function syncUserData() {
 }
 
 // Fungsi untuk mengambil `entitasId` user yang aktif dari IndexedDB
-async function getActiveEntitasId() {
+export async function getActiveEntitasId() {
   try {
     const db = await openDB();
     const tx = db.transaction("userData", "readonly");
@@ -202,11 +202,13 @@ async function clearAllIndexedDBData() {
   try {
     const db = await openDB(); // Pastikan openDB() mengembalikan IndexedDB Database
     
-    const tx = db.transaction(["transaksi", "sumber_dana", "saldo"], "readwrite");
+    const tx = db.transaction(["transaksi", "sumber_dana", "saldo", "token", "token_riwayat"], "readwrite");
     await Promise.all([
       tx.objectStore("transaksi").clear(),
       tx.objectStore("sumber_dana").clear(),
       tx.objectStore("saldo").clear(),
+      tx.objectStore("token").clear(),
+      tx.objectStore("token_riwayat").clear(),
     ]);
 
     await tx.done; // Pastikan transaksi selesai sebelum melanjutkan
@@ -252,7 +254,7 @@ export async function rekonsiliasiData() {
 
 export async function getAllData(STORE_NAME) {
     return new Promise((resolve, reject) => {
-        const request = indexedDB.open("StarlinkMoneyDB", 1);
+        const request = indexedDB.open("StarlinkMoneyDB", 2);
         request.onsuccess = (event) => {
             const db = event.target.result;
             const transaction = db.transaction(STORE_NAME, "readonly");
@@ -274,7 +276,7 @@ export async function getAllData(STORE_NAME) {
 
 export async function saveToIndexedDB(STORE_NAME, data) {
     return new Promise((resolve, reject) => {
-        const request = indexedDB.open("StarlinkMoneyDB", 1);
+        const request = indexedDB.open("StarlinkMoneyDB", 2);
         request.onsuccess = (event) => {
             const db = event.target.result;
             const transaction = db.transaction(STORE_NAME, "readwrite");
@@ -303,7 +305,7 @@ export async function saveUserData(uid) {
   }
 
   try {
-    // 🔥 1. Ambil data user dari Firestore berdasarkan UID
+    // 🔥 2. Ambil data user dari Firestore berdasarkan UID
     const userRef = doc(firestoreDB, "users", uid);
     const userSnap = await getDoc(userRef);
 
@@ -365,7 +367,6 @@ export async function getUserData() {
   });
 }
 
-
 export async function removeUserData() {
   await clearIndexedDB();
 }
@@ -404,7 +405,7 @@ export async function fetchAndStoreAllUsers(entitasId) {
 
 export const getAllUserData = async () => {
     return new Promise((resolve, reject) => {
-        const request = indexedDB.open("StarlinkMoneyDB", 1);
+        const request = indexedDB.open("StarlinkMoneyDB", 2);
         request.onsuccess = (event) => {
             const db = event.target.result;
             const transaction = db.transaction("allUserData", "readonly");
@@ -582,7 +583,7 @@ export const addSingleTransaksi = async (transaksiBaru) => {
 
 export const getAllTransaksi = async () => {
   return new Promise((resolve, reject) => {
-    const request = indexedDB.open("StarlinkMoneyDB", 1);
+    const request = indexedDB.open("StarlinkMoneyDB", 2);
     request.onsuccess = (event) => {
       const db = event.target.result;
       const tx = db.transaction("transaksi", "readonly");
@@ -600,7 +601,7 @@ export const hapusTransaksi = async (id) => {
   if (!id) throw new Error("ID transaksi tidak valid!");
 
   return new Promise((resolve, reject) => {
-    const request = indexedDB.open("StarlinkMoneyDB", 1);
+    const request = indexedDB.open("StarlinkMoneyDB", 2);
 
     request.onsuccess = (event) => {
       const db = event.target.result;
@@ -647,7 +648,7 @@ export async function getTransaksiData() {
 // Fungsi untuk mendapatkan jumlah transaksi bulan ini
 export const getJumlahTransaksi = () => {
   return new Promise((resolve, reject) => {
-    const request = indexedDB.open("StarlinkMoneyDB", 1);
+    const request = indexedDB.open("StarlinkMoneyDB", 2);
 
     request.onsuccess = (event) => {
       const db = event.target.result;
@@ -659,11 +660,11 @@ export const getJumlahTransaksi = () => {
         const transaksiData = e.target.result;
 
         // Filter hanya transaksi bulan ini
-        const bulanIni = new Date().getMonth() + 1; // 1-12
+        const bulanIni = new Date().getMonth() + 2; // 2-22
         const tahunIni = new Date().getFullYear();
         const filtered = transaksiData.filter((item) => {
           const tgl = new Date(item.tanggal);
-          return tgl.getMonth() + 1 === bulanIni && tgl.getFullYear() === tahunIni;
+          return tgl.getMonth() + 2 === bulanIni && tgl.getFullYear() === tahunIni;
         });
 
         resolve(filtered.length); // Mengembalikan jumlah transaksi bulan ini
@@ -690,7 +691,7 @@ export const getTotalOmzet = async () => {
       const request = transaksiStore.openCursor();
       let totalOmzet = 0;
 
-      const bulanIni = new Date().getMonth() + 1;
+      const bulanIni = new Date().getMonth() + 2;
       const tahunIni = new Date().getFullYear();
 
       request.onsuccess = (event) => {
@@ -699,7 +700,7 @@ export const getTotalOmzet = async () => {
           const { nominal = 0, profit = 0, tanggal } = cursor.value;
           const tgl = new Date(tanggal);
 
-          if (tgl.getMonth() + 1 === bulanIni && tgl.getFullYear() === tahunIni) {
+          if (tgl.getMonth() + 2 === bulanIni && tgl.getFullYear() === tahunIni) {
             totalOmzet += Number(nominal) + Number(profit);
           }
 
@@ -727,7 +728,7 @@ export const getTotalProfit = async () => {
     const store = tx.objectStore("transaksi");
 
     const now = new Date();
-    const bulanIni = now.getMonth() + 1;
+    const bulanIni = now.getMonth() + 1; // ✅ yang benar
     const tahunIni = now.getFullYear();
 
     let total = 0;
@@ -810,7 +811,7 @@ export async function getTransaksiHarian() {
   const store = tx.objectStore("transaksi");
 
   const transaksi = [];
-  const bulanIni = new Date().getMonth() + 1;
+  const bulanIni = new Date().getMonth() + 2;
   const tahunIni = new Date().getFullYear();
 
   return new Promise((resolve, reject) => {
@@ -823,7 +824,7 @@ export async function getTransaksiHarian() {
         const tgl = new Date(item.tanggal);
         
         // Filter transaksi hanya di bulan ini
-        if (tgl.getMonth() + 1 === bulanIni && tgl.getFullYear() === tahunIni) {
+        if (tgl.getMonth() + 2 === bulanIni && tgl.getFullYear() === tahunIni) {
           transaksi.push(item);
         }
 
@@ -881,9 +882,9 @@ function generateTanggalBulanIni() {
   const bulan = today.getMonth(); // 0-indexed
 
   const result = [];
-  const jumlahHari = new Date(tahun, bulan + 1, 0).getDate();
+  const jumlahHari = new Date(tahun, bulan + 2, 0).getDate();
 
-  for (let i = 1; i <= jumlahHari; i++) {
+  for (let i = 2; i <= jumlahHari; i++) {
     const tgl = new Date(tahun, bulan, i);
     const formatted = tgl.toISOString().split("T")[0]; // yyyy-mm-dd
     result.push(formatted);
@@ -952,8 +953,8 @@ export async function getSumberDanaData() {
 
     // Sorting: "Uang Kas" harus selalu di urutan pertama
     filteredData.sort((a, b) =>
-      a.sumberDana === "Uang Kas" ? -1 :
-      b.sumberDana === "Uang Kas" ? 1 :
+      a.sumberDana === "Uang Kas" ? -2 :
+      b.sumberDana === "Uang Kas" ? 2 :
       a.sumberDana.localeCompare(b.sumberDana, "id")
     );
 
@@ -1144,5 +1145,121 @@ export async function saveSaldoBySumberDana(sumberDana, newSaldo) {
     await tx.done;
   } catch (error) {
     console.error("❌ Error saat menyimpan saldo:", error);
+  }
+}
+
+// Fungsi untuk TOKEN
+export async function saveTokenToIndexedDB(data) {
+  const db = await openDB();
+  const tx = db.transaction("token", "readwrite");
+  const store = tx.objectStore("token");
+
+  try {
+    await store.put(data); // data harus punya .id = entitasId
+    console.log("✅ Token berhasil disimpan di IndexedDB.");
+  } catch (error) {
+    console.error("❌ Gagal menyimpan token ke IndexedDB:", error);
+  } finally {
+    tx.oncomplete = () => db.close();
+  }
+}
+
+export async function saveTokenRiwayatToIndexedDB(data) {
+  const db = await openDB();
+  const tx = db.transaction("token_riwayat", "readwrite");
+  const store = tx.objectStore("token_riwayat");
+
+  try {
+    await store.put(data); // data harus punya .id
+    console.log("✅ Token Riwayat disimpan ke IndexedDB");
+  } catch (error) {
+    console.error("❌ Gagal simpan token_riwayat ke IndexedDB:", error);
+  } finally {
+    tx.oncomplete = () => db.close();
+  }
+}
+
+// Ambil token berdasarkan entitasId
+export async function getTokenFromIndexedDB(entitasId) {
+  const db = await openDB();
+  const tx = db.transaction("token", "readonly");
+  const store = tx.objectStore("token");
+
+  return new Promise((resolve, reject) => {
+    const request = store.get(entitasId);
+
+    request.onsuccess = () => resolve(request.result || null);
+    request.onerror = () => {
+      console.error("❌ Gagal mengambil token dari IndexedDB:", request.error);
+      reject(request.error);
+    };
+
+    tx.oncomplete = () => db.close();
+  });
+}
+
+// Update token total
+export async function updateTokenInIndexedDB(entitasId, updatedToken) {
+  const db = await openDB();
+  const tx = db.transaction("token", "readwrite");
+  const store = tx.objectStore("token");
+
+  try {
+    store.put(updatedToken); // langsung update objek lengkap
+    await tx.done;
+    return updatedToken;
+  } catch (error) {
+    console.error("❌ Gagal update token di IndexedDB:", error);
+    throw error;
+  } finally {
+    db.close();
+  }
+}
+
+export async function fetchAndSaveTokenData(entitasId) {
+  if (!entitasId) throw new Error("entitasId tidak tersedia");
+
+  // Ambil dan simpan dokumen 'token'
+  const tokenDocRef = doc(firestoreDB, "token", entitasId);
+  const tokenSnapshot = await getDoc(tokenDocRef);
+  if (tokenSnapshot.exists()) {
+    const tokenData = tokenSnapshot.data();
+    tokenData.id = entitasId;
+    await saveTokenToIndexedDB(tokenData);
+    console.log("✅ Token berhasil disimpan ke IndexedDB");
+	} else {
+	console.warn("⚠️ Dokumen 'token' tidak ditemukan di Firestore untuk entitasId:", entitasId);
+}
+
+  // Ambil dan simpan koleksi 'token_riwayat'
+  const q = query(
+    collection(firestoreDB, "token_riwayat"),
+    where("entitasId", "==", entitasId)
+  );
+  const tokenRiwayatSnapshot = await getDocs(q);
+  const tokenRiwayatData = tokenRiwayatSnapshot.docs.map((doc) => ({
+    id: doc.id,
+    ...doc.data(),
+  }));
+
+  for (const item of tokenRiwayatData) {
+    await saveTokenRiwayatToIndexedDB(item);
+  }
+
+  console.log("✅ Token Riwayat berhasil disimpan ke IndexedDB");
+}
+
+export async function deleteTokenFromIndexedDB(entitasId) {
+  const db = await openDB();
+  const tx = db.transaction("token", "readwrite");
+  const store = tx.objectStore("token");
+
+  try {
+    await store.delete(entitasId);
+    console.log("🗑️ Token berhasil dihapus dari IndexedDB.");
+  } catch (error) {
+    console.error("❌ Gagal menghapus token dari IndexedDB:", error);
+  } finally {
+    tx.oncomplete = () => db.close();
   }
 }

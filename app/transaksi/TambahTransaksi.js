@@ -6,8 +6,10 @@ import { collection, query, where, getDocs } from "firebase/firestore";
 import { getSumberDana } from "../../services/sumberDanaService";
 import { TransaksiContext } from "../../context/TransaksiContext";
 import { SaldoContext } from "../../context/SaldoContext"; // ✅ Tambahkan import ini
-import { addSingleTransaksi } from "../../services/indexedDBService";
+import { addSingleTransaksi, getTokenFromIndexedDB } from "../../services/indexedDBService";
 import { hitungSaldo } from "../../lib/hitungSaldo";
+import { gunakanToken } from "../../services/tokenService"; // ✅ Tambahkan ini
+import { TokenContext } from "../../context/tokenContext"; // atau path sesuai struktur kamu
 
 const TambahTransaksi = ({ closeModal, refreshTransaksi, editData }) => {
   const { tambahTransaksi } = useContext(TransaksiContext);
@@ -32,6 +34,9 @@ const TambahTransaksi = ({ closeModal, refreshTransaksi, editData }) => {
   const [sumberDana, setSumberDana] = useState([]);
   const [error, setError] = useState("");
   const [successMessage, setSuccessMessage] = useState("");
+  const [showPopup, setShowPopup] = useState(false);
+  const [activeTab, setActiveTab] = useState("tab1");
+  const { setTotalToken } = useContext(TokenContext);
 
   useEffect(() => {
     let isMounted = true;
@@ -108,8 +113,6 @@ const TambahTransaksi = ({ closeModal, refreshTransaksi, editData }) => {
     }));
   };
 
-const [showPopup, setShowPopup] = useState(false);
-
 const handleSubmit = async (e) => {
   e.preventDefault();
   console.log("🟢 handleSubmit() dipanggil...");
@@ -138,7 +141,7 @@ const handleSubmit = async (e) => {
     entitasId,
     jenisTransaksi,
     createdAt: Date.now(),
-	profit: Number(form.tarif),
+    profit: Number(form.tarif),
   };
 
   // Bersihkan field yang tidak relevan berdasarkan tab
@@ -152,6 +155,17 @@ const handleSubmit = async (e) => {
 
   setLoading(true);
   try {
+    // ✅ STEP 1: Validasi token cukup
+    const tokenInfo = await getTokenFromIndexedDB(entitasId);
+    const currentToken = tokenInfo?.totalToken ?? 0;
+
+    if (currentToken < 1) {
+      alert("❌ Token tidak mencukupi untuk membuat transaksi.");
+      setLoading(false);
+      return;
+    }
+
+    // ✅ STEP 2: Simpan transaksi
     console.log("📩 Menyimpan transaksi ke store transaksi...");
     console.log("🔍 Data transaksi yang akan disimpan:", transaksiData);
 
@@ -166,6 +180,19 @@ const handleSubmit = async (e) => {
     if (!transaksiBaru.sumberDana) {
       throw new Error("❌ sumberDana tidak ditemukan dalam transaksi!");
     }
+
+// ✅ STEP 3: Kurangi token (tidak bergantung ke transaksi lagi)
+setTimeout(async () => {
+  const tokenResult = await gunakanToken(1, "Transaksi Baru");
+
+  if (!tokenResult.success) {
+    console.warn("⚠️ Transaksi tersimpan, tapi gagal mengurangi token:", tokenResult.error);
+    alert(`⚠️ Transaksi berhasil, tapi token gagal dikurangi: ${tokenResult.error}`);
+  } else {
+    // ✅ Update context token agar UI langsung berubah
+    setTotalToken((prev) => prev - 1);
+  }
+}, 0);
 
     console.log("💰 Memulai perhitungan saldo...");
     await updateSaldo(transaksiBaru.sumberDana, transaksiBaru);
@@ -185,8 +212,6 @@ const handleSubmit = async (e) => {
   }
 };
 
-  const [activeTab, setActiveTab] = useState("tab1");
-
   useEffect(() => {
     const link = document.createElement("link");
     link.rel = "stylesheet";
@@ -196,7 +221,7 @@ const handleSubmit = async (e) => {
     return () => {
       document.head.removeChild(link);
     };
-  }, []);  
+  }, []);
 
 return (
     <div className="modal fade show" style={{ display: "block" }} tabIndex="-1">

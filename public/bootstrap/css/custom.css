@@ -1,3 +1,7 @@
+/* ======================= */
+/*    MAIN COMPONENTS      */
+/* ======================= */
+
 /* Reset Default */
 * {
   margin: 0;
@@ -7,68 +11,199 @@
 
 /* File: globals.css atau style global Anda */
 body {
-  background-color: #e3f2fd ; /* Warna abu pudar */
+  background-color: #e3f2fd; /* Warna abu pudar */
 }
 
 /* Header styling */
 .header-container {
   position: fixed;
   top: 50px; /* Sejajar dengan sidebar */
-  left: 240px; /* Awalnya sejajar sidebar */
+  left: 240px; /* Default posisi saat sidebar terbuka */
   width: calc(100% - 240px); /* Mengisi sisa lebar setelah sidebar */
   display: flex;
   align-items: center;
-  background-color: white; /* Background putih */
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* Bayangan hitam pudar */
+  background-color: white;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
   padding: 15px 20px;
   font-weight: bold;
   text-align: left;
-  z-index: 10; /* Pastikan di atas konten lain */
-  border-bottom: 1px solid #ddd; /* Tambahkan garis bawah jika perlu */
+  z-index: 10;
+  border-bottom: 1px solid #ddd;
 }
 
-/* Styling untuk card content */
+/* ======================= */
+/*    CONTENT CONTAINER    */
+/* ======================= */
+
+.content-container {
+  margin-top: 120px;
+  padding: 20px;
+  padding-top: 70px;
+  transition: margin-left 0.3s ease-in-out;
+  width: 100%;
+}
+
+/* Margin dinamis berdasarkan status sidebar */
+.sidebar-open {
+  margin-left: 240px;
+}
+
+.sidebar-closed {
+  margin-left: 56px;
+}
+
+/* ======================= */
+/*  HEADER RESPONSIVE FIX  */
+/* ======================= */
+
+/* Saat sidebar terbuka */
+.sidebar-open .header-container {
+  left: 240px;
+  width: calc(100% - 240px);
+  transition: all 0.3s ease-in-out;
+}
+
+/* Saat sidebar tertutup */
+.sidebar-closed .header-container {
+  left: 56px;
+  width: calc(100% - 56px);
+  transition: all 0.3s ease-in-out;
+}
+
+
+/* ======================= */
+/*        CARD STYLE       */
+/* ======================= */
+
 .card-content {
-  background-color: #ffffff; /* Background putih untuk card content */
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* Bayangan hitam pudar */
+  background-color: #ffffff;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
   border-radius: 8px;
   padding: 20px;
 }
 
-/* Styling untuk header card content */
 .card-header {
-  background-color: #e3f2fd; /* Warna latar belakang untuk header */
+  background-color: #e3f2fd;
   padding: 10px;
-  border-radius: 8px 8px 0 0; /* Membuat sudut kiri dan kanan atas bulat */
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); /* Bayangan halus pada header */
+  border-radius: 8px 8px 0 0;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
-/* Styling untuk isi card content */
 .card-body {
   padding: 15px;
 }
 
-/* Styling untuk card grafik */
 .card-graph {
-  background-color: #ffffff; /* Background putih untuk card grafik */
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15); /* Bayangan lebih kuat untuk card grafik */
+  background-color: #ffffff;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
   border-radius: 8px;
   padding: 20px;
 }
 
-/* Memberikan sedikit pemisahan antara card content dan card grafik */
 .card-graph h5,
 .card-content h5 {
   font-weight: bold;
   font-size: 26px;
 }
 
-.card-content .text-primary, 
-.card-content .text-success, 
+.card-content .text-primary,
+.card-content .text-success,
 .card-content .text-danger {
-  font-size: 26px; /* Menyesuaikan ukuran teks untuk card content */
+  font-size: 26px;
   margin-bottom: 0px;
 }
+
+/* ======================= */
+/* RESPONSIVE BREAKPOINTS */
+/* ======================= */
+
+/* Extra Small Devices (≤ 480px) */
+@media (max-width: 480px) {
+  .navbar {
+    width: 100%;
+  }
+
+  .header-container {
+    position: relative;
+    top: 0;
+    left: 0;
+    width: 100%;
+    padding: 10px 15px;
+    font-size: 14px;
+    z-index: 10;
+  }
+
+  .content-container {
+    margin-top: 20px;
+    padding: 15px;
+    width: 100%;
+	overflow-x: hidden;
+  }
+
+  .card-content,
+  .card-graph {
+    padding: 15px;
+  }
+
+  .card-graph h5,
+  .card-content h5,
+  .card-content .text-primary,
+  .card-content .text-success,
+  .card-content .text-danger {
+    font-size: 18px;
+  }
+}
+
+/* Small Devices (≤ 768px) */
+@media (max-width: 768px) {
+  .header-container {
+    position: fixed;
+    margin-top: 110px;
+    left: 0;
+    width: 100%;
+    padding: 12px 18px;
+    font-size: 15px;
+  }
+
+  .content-container {
+    margin-top: 170px;
+    padding: 18px;
+    width: 100%;
+    transition: all 0.3s ease-in-out;
+	overflow-x: hidden;
+  }
+
+  /* Saat sidebar terbuka - geser ke kanan */
+  .sidebar-open .content-container {
+    margin-left: 240px;
+	overflow-x: hidden;
+  }
+
+  /* Saat sidebar tertutup - geser lebih kecil */
+  .sidebar-closed .content-container {
+    margin-left: 56px;
+  }
+
+  .card-content,
+  .card-graph {
+    padding: 18px;
+  }
+
+  .card-graph h5,
+  .card-content h5,
+  .card-content .text-primary,
+  .card-content .text-success,
+  .card-content .text-danger {
+    font-size: 20px;
+  }
+
+  /* Sidebar wrapper tidak perlu margin kiri */
+  .sidebar-open,
+  .sidebar-closed {
+    margin-left: 0;
+  }
+}
+
 
 
 /* ======================= */
@@ -78,25 +213,137 @@ body {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  background: #1a73e8; /* Warna biru untuk navbar */
+  background: #1a73e8;
   color: white;
-  padding: 5px 20px; /* Mengurangi padding untuk navbar lebih pendek */
+  padding: 5px 20px;
   position: fixed;
   top: 0;
   left: 0;
   width: 100%;
-  height: 50px; /* Menurunkan tinggi navbar */
+  height: 50px;
   z-index: 1000;
-  box-shadow: 0 4px 8px rgba(26, 115, 232, 0.2); /* Bayangan biru pudar */
+  box-shadow: 0 4px 8px rgba(26, 115, 232, 0.2);
+  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+  font-size: 16px;
 }
 
-.navbar-toggler {
-  background: none;
-  border: none;
-  color: white;
-  font-size: 20px;
+/* Judul Aplikasi */
+.navbar-brand {
+  font-size: 18px;
+  font-weight: 700;
+  color: #ffffff;
+  letter-spacing: 0.5px;
+}
+
+/* ======================= */
+/*     TOKEN SECTION       */
+/* ======================= */
+.token-container {
+  position: relative;
+}
+
+.token-card {
+  background-color: white;
+  color: #1a73e8;
+  padding: 6px 14px;
+  border-radius: 12px;
   cursor: pointer;
-  padding: 5px 10px;
+  font-weight: 600;
+  transition: all 0.2s ease-in-out;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
+}
+
+.token-card:hover {
+  background-color: #e8f0fe;
+  transform: translateY(-1px);
+}
+
+/* ======================= */
+/*   TOKEN DETAILS DROPDOWN */
+/* ======================= */
+.token-details {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  background-color: #ffffff;
+  padding: 12px 16px;
+  border-radius: 10px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  border: 1px solid #e0e0e0;
+  color: #333;
+  z-index: 100;
+  width: 260px; /* diperlebar */
+  font-size: 14px;
+  animation: fadeIn 0.2s ease-in-out;
+}
+
+.token-details p {
+  margin: 0 0 6px;
+  font-weight: 600;
+  font-size: 15px;
+}
+
+.token-details ul {
+  list-style-type: disc;
+  padding-left: 18px;
+  margin: 0;
+}
+
+.token-details li {
+  margin-bottom: 4px;
+  line-height: 1.4;
+}
+
+/* Optional fade-in animation */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* =============================== */
+/*  RESPONSIVE NAVBAR & TOKEN UI  */
+/* =============================== */
+
+@media (max-width: 480px) {
+  .navbar {
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+    height: auto;
+    padding: 10px 15px;
+    text-align: center;
+  }
+
+  .navbar-brand {
+    font-size: 20px;
+    margin-bottom: 8px;
+    width: 100%;
+    text-align: center;
+  }
+
+  .token-container {
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    margin-bottom: 5px;
+  }
+
+  .token-card {
+    padding: 8px 16px;
+    font-size: 14px;
+  }
+
+  .token-details {
+    width: 90%;
+    right: 50%;
+    transform: translateX(50%);
+  }
 }
 
 
@@ -109,13 +356,14 @@ body {
   top: 50px;
   left: 0;
   height: calc(100vh - 50px);
-  width: 56px; /* Sidebar default kecil */
+  height: calc(100dvh - 50px);
+  width: 56px;
   background: #ffffff;
   color: #5f6368;
   display: flex;
   flex-direction: column;
   padding: 10px;
-  transition: width 0.3s ease-in-out, background 0.3s ease;
+  transition: width 0.3s ease-in-out, background 0.3s ease, transform 0.3s ease-in-out;
   overflow: hidden;
   border-right: 1px solid #ddd;
   z-index: 20;
@@ -123,11 +371,17 @@ body {
 
 .sidebar.open {
   width: 240px;
+  padding-top: 30px;
 }
 
 .sidebar.closed {
   width: 56px;
+  padding-top: 30px;
 }
+
+/* ======================= */
+/*    LINK NAVIGATION     */
+/* ======================= */
 
 .sidebar .nav-link {
   display: flex;
@@ -150,6 +404,78 @@ body {
   color: white;
   box-shadow: 0 4px 6px rgba(26, 115, 232, 0.3);
   border-radius: 5px;
+}
+
+/* ======================= */
+/*   TOGGLE BUTTON STYLE  */
+/* ======================= */
+
+.sidebar .toggle-btn {
+  position: absolute;
+  bottom: 15px;
+  right: 15px;
+  z-index: 99;
+}
+
+.sidebar .toggle-icon {
+  background-color: #1a73e8;
+  color: white;
+  border: none;
+  border-radius: 50%;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background-color 0.3s ease;
+}
+
+.sidebar .toggle-icon:hover {
+  background-color: #1558b0;
+}
+
+/* ======================= */
+/*   RESPONSIVE SIDEBAR   */
+/* ======================= */
+
+@media (max-width: 992px) {
+  .sidebar.open {
+    width: 240px;
+    transform: translateX(0);
+  }
+
+  .sidebar {
+    width: 56px;
+    transition: width 0.3s ease-in-out;
+  }
+}
+
+@media (max-width: 768px) {
+  .sidebar {
+    width: 56px;
+    transition: width 0.3s ease-in-out;
+  }
+
+  .sidebar.open {
+    width: 240px;
+    transform: translateX(0);
+  }
+}
+
+@media (max-width: 480px) {
+  .sidebar {
+    padding: 8px;
+  }
+
+  .sidebar .toggle-icon {
+    width: 28px;
+    height: 28px;
+  }
+
+  .sidebar .toggle-btn {
+    bottom: 10px;
+    right: 10px;
+  }
 }
 
 /* ======================= */
@@ -192,185 +518,6 @@ body {
 /* Mengatur tampilan sub-menu agar lebih rapi saat sidebar tertutup */
 .sidebar.closed .sub-menu {
   display: none;
-}
-
-/* ======================= */
-/*    CONTENT STYLING     */
-/* ======================= */
-.content {
-  margin-top: 60px;
-  padding: 20px;
-  transition: margin-left 0.3s ease-in-out;
-  width: 100%;
-}
-
-.content-shrink {
-  margin-left: 80px;
-}
-
-/* Responsive */
-@media (max-width: 768px) {
-  .sidebar.open {
-    width: 80px;
-  }
-
-  .content {
-    margin-left: 80px;
-  }
-}
-
-/* ---------------------------- */
-/* Styling untuk Halaman Login */
-/* ---------------------------- */
-
-/* Layout utama - Full Screen */
-.home-container {
-  display: flex;
-  height: 100vh;
-  width: 100vw;
-  background-color: #f4f4f4;
-  margin: 0;
-  padding: 0;
-  overflow: hidden;
-  position: fixed;
-  top: 0;
-  left: 0;
-}
-
-/* Bagian kiri - Deskripsi aplikasi */
-.home-description {
-  width: 70%;
-  padding: 40px;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  background: #ffffff;
-  color: #333;
-}
-
-.home-description h1 {
-  font-size: 36px;
-  font-weight: bold;
-  margin-bottom: 16px;
-}
-
-.home-description p {
-  font-size: 18px;
-  margin-bottom: 20px;
-}
-
-.home-description ul {
-  padding-left: 20px;
-}
-
-.home-description li {
-  font-size: 16px;
-  margin-bottom: 8px;
-}
-
-/* Ruang gambar */
-.app-image {
-  text-align: center;
-  margin-top: 20px;
-}
-
-.app-image img {
-  width: 80%;
-  max-width: 400px;
-  border-radius: 8px;
-  box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.2);
-}
-
-.app-image figcaption {
-  margin-top: 8px;
-  font-size: 14px;
-  color: #666;
-}
-
-/* Garis pemisah */
-.vertical-line {
-  width: 2px;
-  background-color: #ccc;
-  height: 80%;
-  align-self: center;
-}
-
-/* Bagian kanan - Form Login */
-.login-section {
-  width: 30%;
-  padding: 40px;
-  background: white;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-}
-
-.register-info {
-  margin-top: 12px;
-  text-align: center;
-}
-
-.register-info a {
-  color: #007bff;
-  text-decoration: none;
-}
-
-.register-info a:hover {
-  text-decoration: underline;
-}
-
-/* Responsif untuk tablet */
-@media (max-width: 900px) {
-  .home-container {
-    flex-direction: column;
-  }
-
-  .home-description {
-    width: 100%;
-    text-align: center;
-    padding: 20px;
-  }
-
-  .vertical-line {
-    display: none;
-  }
-
-  .login-section {
-    width: 100%;
-    padding: 20px;
-  }
-}
-
-/* Responsif untuk handphone */
-@media (max-width: 600px) {
-  .home-description h1 {
-    font-size: 28px;
-  }
-
-  .home-description p {
-    font-size: 16px;
-  }
-
-  .home-description li {
-    font-size: 14px;
-  }
-
-  .app-image img {
-    width: 100%;
-    max-width: 300px;
-  }
-
-  .login-section {
-    padding: 16px;
-  }
-
-  .register-info {
-    font-size: 14px;
-  }
-
-  .app-image figcaption {
-    font-size: 12px;
-  }
 }
 
 /* ========================= */
@@ -482,174 +629,9 @@ select.form-control {
     }
 }
 
-/* ======================= */
-/*    SUMBER DANA PAGES    */
-/* ======================= */
-
-.sumber-dana-container {
-  padding: 20px;
-  background-color: #f8f9fa;
-}
-
-.title {
-  font-size: 24px;
-  font-weight: bold;
-  margin-bottom: 20px;
-}
-
-.sumber-dana-card {
-  background: #fff;
-  padding: 15px;
-  border-radius: 8px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-}
-
-.btn-add {
-  background-color: #28a745;
-  color: white;
-  padding: 10px 15px;
-  border: none;
-  cursor: pointer;
-  border-radius: 5px;
-  margin-bottom: 15px;
-}
-
-.sumber-dana-table {
-  width: 100%;
-  border-collapse: collapse;
-  background: #fff;
-}
-
-.sumber-dana-table th, .sumber-dana-table td {
-  padding: 10px;
-  border: 1px solid #ddd;
-  text-align: left;
-}
-
-.btn-edit {
-  background-color: #ffc107;
-  color: black;
-  padding: 5px 10px;
-  border: none;
-  cursor: pointer;
-  border-radius: 5px;
-  margin-right: 5px;
-}
-
-.btn-delete {
-  background-color: #dc3545;
-  color: white;
-  padding: 5px 10px;
-  border: none;
-  cursor: pointer;
-  border-radius: 5px;
-}
-
-/* Styling untuk memastikan label dan input sejajar */
-.modal-body .row {
-  margin-bottom: 10px;
-}
-
-.modal-body label {
-  display: block;
-  width: 100%;
-  font-weight: bold;
-  margin-bottom: 5px;
-}
-
-.modal-body .form-control,
-.modal-body .form-select {
-  width: 100%;
-}
-
-/* Styling untuk tab */
-.nav-tabs .nav-item {
-  margin-right: 5px;
-}
-
-.nav-tabs .nav-link {
-  padding: 8px 12px;
-  border-radius: 5px;
-}
-
-.nav-tabs .nav-link.active {
-  background-color: #007bff;
-  color: white;
-}
-
-/* Responsif */
-@media (max-width: 768px) {
-  .modal-dialog {
-    max-width: 95%;
-  }
-}
-
-/* Custom CSS untuk halaman login */
-.login-container {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100vw;
-  height: 100vh;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  background: rgba(0, 0, 0, 0.85); /* Latar belakang semi-transparan */
-  z-index: 9999; /* Menutupi elemen lain */
-}
-
-.login-card {
-  background: white;
-  padding: 2rem;
-  border-radius: 10px;
-  box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.2);
-  width: 100%;
-  max-width: 400px;
-}
-
-.login-title {
-  text-align: center;
-  margin-bottom: 1.5rem;
-  font-size: 1.5rem;
-  font-weight: bold;
-}
-
-.form-group {
-  margin-bottom: 1rem;
-}
-
-.form-label {
-  font-weight: bold;
-}
-
-.form-control {
-  width: 100%;
-  padding: 0.75rem;
-  border: 1px solid #ccc;
-  border-radius: 5px;
-  font-size: 1rem;
-}
-
-.btn-login {
-  width: 100%;
-  padding: 0.75rem;
-  background: #007bff;
-  color: white;
-  border: none;
-  border-radius: 5px;
-  font-size: 1rem;
-  cursor: pointer;
-  transition: background 0.3s ease;
-}
-
-.btn-login:hover {
-  background: #0056b3;
-}
-
-.alert-login {
-  text-align: center;
-  font-size: 0.9rem;
-}
+/* ============================= */
+/*    TABEL DAN KOMPONEN LAIN    */
+/* ============================= */
 
 /* ===== Custom Styles for Tables ===== */
 .table-responsive {
@@ -913,6 +895,457 @@ tr:hover {
 }
 
 /* ======================= */
+/*        PAGE LOGIN       */
+/* ======================= */
+
+/* Layout utama - Full Screen */
+.home-container {
+  display: flex;
+  height: 100vh;
+  width: 100vw;
+  background-color: #f4f4f4;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+  position: fixed;
+  top: 0;
+  left: 0;
+}
+
+/* Bagian kiri - Deskripsi + Carousel */
+.home-description {
+  width: 70%;
+  padding: 40px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  background: #ffffff;
+  color: #333;
+  overflow: hidden;
+  position: relative;
+}
+
+.home-description h1 {
+  font-size: 36px;
+  font-weight: bold;
+  margin-bottom: 16px;
+}
+
+.home-description p {
+  font-size: 18px;
+  margin-bottom: 20px;
+}
+
+.home-description ul {
+  padding-left: 20px;
+}
+
+.home-description li {
+  font-size: 16px;
+  margin-bottom: 8px;
+}
+
+/* Garis pemisah */
+.vertical-line {
+  width: 2px;
+  background-color: #ccc;
+  height: 80%;
+  align-self: center;
+}
+
+/* Bagian kanan - Form Login */
+.login-section {
+  width: 30%;
+  padding: 40px;
+  background: white;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.register-info {
+  margin-top: 12px;
+  text-align: center;
+}
+
+.register-info a {
+  color: #007bff;
+  text-decoration: none;
+}
+
+.register-info a:hover {
+  text-decoration: underline;
+}
+
+.login-container {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background: rgba(0, 0, 0, 0.85);
+  z-index: 9999;
+}
+
+.login-card {
+  background: white;
+  padding: 2rem;
+  border-radius: 10px;
+  box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.2);
+  width: 100%;
+  max-width: 400px;
+}
+
+.login-title {
+  text-align: center;
+  margin-bottom: 1.5rem;
+  font-size: 1.5rem;
+  font-weight: bold;
+}
+
+.form-group {
+  margin-bottom: 1rem;
+}
+
+.form-label {
+  font-weight: bold;
+}
+
+.form-control {
+  width: 100%;
+  padding: 0.75rem;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  font-size: 1rem;
+}
+
+.btn-login {
+  width: 100%;
+  padding: 0.75rem;
+  background: #007bff;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: background 0.3s ease;
+}
+
+.btn-login:hover {
+  background: #0056b3;
+}
+
+.alert-login {
+  text-align: center;
+  font-size: 0.9rem;
+}
+
+/* ======================= */
+/*        CAROUSEL         */
+/* ======================= */
+
+.carousel-display {
+  overflow: hidden;
+  position: relative;
+  height: 100%;
+  width: 100%;
+}
+
+.carousel-slides {
+  display: flex;
+  transition: transform 0.5s ease-in-out;
+  width: 110%;
+  height: 100%;
+}
+
+.carousel-slide {
+  flex: 0 0 100%;
+  padding: 2rem;
+  box-sizing: border-box;
+  overflow-y: auto;
+  margin: auto;
+}
+
+/* Tombol next slide floating */
+.btn-next-slide {
+  position: absolute;
+  top: 50%;
+  right: 24px;
+  transform: translateY(-50%);
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background-color: #fff;
+  border: none;
+  font-size: 2rem;
+  color: #333;
+  z-index: 10;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+}
+
+.btn-next-slide:hover {
+  background-color: #e0e0e0;
+  color: #007bff;
+  transform: translateY(-50%) scale(1.05);
+}
+
+.chevron {
+  font-size: 1.5rem;
+  line-height: 1;
+}
+
+/* ======================= */
+/*     PRICING SLIDE       */
+/* ======================= */
+
+.slide-title {
+  font-size: 1.6rem;
+  margin-bottom: 1.5rem;
+  text-align: center;
+}
+
+.pricing-cards {
+  display: flex;
+  justify-content: center;
+  gap: 1.5rem;
+  flex-wrap: wrap;
+}
+
+.pricing-card {
+  background-color: #ffffff;
+  border: 1px solid #ddd;
+  border-radius: 16px;
+  padding: 1.5rem;
+  width: 300px; /* disamakan dan agak dilebarkan agar teks muat */
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.08);
+  transition: transform 0.3s;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.pricing-card:hover {
+  transform: translateY(-5px);
+}
+
+.best-deal {
+  border: 2px solid #007bff;
+  background-color: #f4faff;
+  transform: scale(1.05);
+}
+
+.price {
+  font-weight: bold;
+  margin: 0.5rem 0 1rem;
+  color: #007bff;
+}
+
+.price p {
+	font-size: 20px;
+}
+
+.pricing-card ul {
+  list-style: none;
+  padding: 0;
+  margin-bottom: 1rem;
+  width: 100%;
+}
+
+.pricing-card li {
+  margin: 0.5rem 0;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid #eee;
+  text-align: center;
+}
+
+.card-footer {
+  font-size: 0.9rem;
+  color: #555;
+  margin-top: auto;
+  padding-top: 1rem;
+  border-top: 1px solid #eee;
+  width: 100%;
+  text-align: center;
+  line-height: 1.4;
+}
+
+.card-footer.highlight {
+  font-weight: 600;
+  color: #007bff;
+}
+
+.token-info-box {
+	margin: auto;
+	padding-top: 30px;
+}
+
+
+
+/* Responsif untuk tablet */
+@media (max-width: 900px) {
+  .home-container {
+    flex-direction: column;
+  }
+
+  .home-description {
+    width: 100%;
+    text-align: center;
+    padding: 20px;
+  }
+
+  .vertical-line {
+    display: none;
+  }
+
+  .login-section {
+    width: 100%;
+    padding: 20px;
+  }
+}
+
+/* Responsif untuk handphone */
+@media (max-width: 600px) {
+  .home-description h1 {
+    font-size: 28px;
+  }
+
+  .home-description p {
+    font-size: 16px;
+  }
+
+  .home-description li {
+    font-size: 14px;
+  }
+
+  .app-image img {
+    width: 100%;
+    max-width: 300px;
+  }
+
+  .login-section {
+    padding: 16px;
+  }
+
+  .register-info {
+    font-size: 14px;
+  }
+
+  .app-image figcaption {
+    font-size: 12px;
+  }
+}
+
+/* ======================= */
+/*    SUMBER DANA PAGES    */
+/* ======================= */
+
+.sumber-dana-container {
+  padding: 20px;
+  background-color: #f8f9fa;
+}
+
+.title {
+  font-size: 24px;
+  font-weight: bold;
+  margin-bottom: 20px;
+}
+
+.sumber-dana-card {
+  background: #fff;
+  padding: 15px;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.btn-add {
+  background-color: #28a745;
+  color: white;
+  padding: 10px 15px;
+  border: none;
+  cursor: pointer;
+  border-radius: 5px;
+  margin-bottom: 15px;
+}
+
+.sumber-dana-table {
+  width: 100%;
+  border-collapse: collapse;
+  background: #fff;
+}
+
+.sumber-dana-table th, .sumber-dana-table td {
+  padding: 10px;
+  border: 1px solid #ddd;
+  text-align: left;
+}
+
+.btn-edit {
+  background-color: #ffc107;
+  color: black;
+  padding: 5px 10px;
+  border: none;
+  cursor: pointer;
+  border-radius: 5px;
+  margin-right: 5px;
+}
+
+.btn-delete {
+  background-color: #dc3545;
+  color: white;
+  padding: 5px 10px;
+  border: none;
+  cursor: pointer;
+  border-radius: 5px;
+}
+
+/* Styling untuk memastikan label dan input sejajar */
+.modal-body .row {
+  margin-bottom: 10px;
+}
+
+.modal-body label {
+  display: block;
+  width: 100%;
+  font-weight: bold;
+  margin-bottom: 5px;
+}
+
+.modal-body .form-control,
+.modal-body .form-select {
+  width: 100%;
+}
+
+/* Styling untuk tab */
+.nav-tabs .nav-item {
+  margin-right: 5px;
+}
+
+.nav-tabs .nav-link {
+  padding: 8px 12px;
+  border-radius: 5px;
+}
+
+.nav-tabs .nav-link.active {
+  background-color: #007bff;
+  color: white;
+}
+
+/* Responsif */
+@media (max-width: 768px) {
+  .modal-dialog {
+    max-width: 95%;
+  }
+}
+
+/* ======================= */
 /*    DETAIL TOKO PAGES    */
 /* ======================= */
 
@@ -945,4 +1378,9 @@ tr:hover {
   .thumb-photo {
     aspect-ratio: auto;
   }
+}
+
+.object-fit-cover {
+  object-fit: cover;
+  width: 100%;
 }

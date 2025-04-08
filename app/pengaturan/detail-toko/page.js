@@ -71,24 +71,35 @@ const PageIdentitasToko = () => {
                 <div className="card h-100 border-0 shadow-sm">
                   <div className="card-body">
                     <h5 className="mb-4 text-dark">Foto Toko</h5>
-                    <div className="foto-preview mb-3">
-                      <img
-                        src="/placeholder-landscape.jpg"
-                        alt="Foto utama"
-                        className="img-fluid rounded main-photo"
-                      />
-                    </div>
-                    <div className="row g-2">
-                      {[1, 2, 3].map((i) => (
-                        <div className="col-4" key={i}>
-                          <img
-                            src={`/thumbnail-${i}.jpg`}
-                            alt={`Thumbnail ${i}`}
-                            className="img-fluid rounded thumb-photo"
-                          />
-                        </div>
-                      ))}
-                    </div>
+						<div className="foto-preview mb-3 border rounded d-flex align-items-center justify-content-center bg-light" style={{ height: "300px" }}>
+						  <img
+							src="/placeholder-landscape.jpg"
+							alt="Foto utama"
+							className="img-fluid h-100 object-fit-cover"
+							onError={(e) => {
+							  e.target.style.display = "none";
+							  e.target.insertAdjacentHTML('afterend', '<a href="#" class="text-decoration-none text-muted">Upload foto di sini</a>');
+							}}
+						  />
+						</div>
+
+						<div className="row g-2">
+						  {[1, 2, 3].map((i) => (
+							<div className="col-4" key={i}>
+							  <div className="border rounded d-flex align-items-center justify-content-center bg-light" style={{ height: "100px" }}>
+								<img
+								  src={`/thumbnail-${i}.jpg`}
+								  alt={`Thumbnail ${i}`}
+								  className="img-fluid h-100 object-fit-cover"
+								  onError={(e) => {
+									e.target.style.display = "none";
+									e.target.insertAdjacentHTML('afterend', '<a href="#" class="text-decoration-none text-muted small">Upload foto di sini</a>');
+								  }}
+								/>
+							  </div>
+							</div>
+						  ))}
+						</div>
                   </div>
                 </div>
               </div>

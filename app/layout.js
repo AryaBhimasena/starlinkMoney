@@ -1,21 +1,33 @@
 "use client";
 
-import { useState } from "react";
-import { usePathname } from "next/navigation"; // 🔥 Import usePathname
+import { usePathname } from "next/navigation";
+import { useEffect, useState } from "react";
 import Sidebar from "../components/Sidebar";
 import Navbar from "../components/Navbar";
 import { IndexedDBProvider } from "../context/IndexedDBContext";
-import { SumberDanaProvider } from "../context/SumberDanaContext"; 
-import { TransaksiProvider } from "../context/TransaksiContext"; 
-import { SaldoProvider } from "../context/SaldoContext"; 
+import { SumberDanaProvider } from "../context/SumberDanaContext";
+import { TransaksiProvider } from "../context/TransaksiContext";
+import { SaldoProvider } from "../context/SaldoContext";
+import { TokenProvider } from "../context/tokenContext";
 
 import "../public/bootstrap/css/bootstrap.min.css";
 import "../public/bootstrap/css/custom.css";
 
 export default function RootLayout({ children }) {
-  const [isSidebarOpen, setSidebarOpen] = useState(true);
-  const pathname = usePathname(); // 🔥 Dapatkan path halaman saat ini
-  const isAuthPage = pathname === "/"; // 🔥 Cek apakah halaman login (sekarang berada di app/page.js)
+  const pathname = usePathname();
+  const isAuthPage = pathname === "/";
+
+  const [sidebarOpen, setSidebarOpen] = useState(true);
+
+  // 👇 Auto tutup sidebar pas pertama kali load kalau layar kecil
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const isMobile = window.innerWidth <= 768;
+      if (isMobile) {
+        setSidebarOpen(false);
+      }
+    }
+  }, []);
 
   return (
     <html lang="id">
@@ -23,27 +35,31 @@ export default function RootLayout({ children }) {
         <meta name="viewport" content="width=device-width, initial-scale=1" />
       </head>
       <body className="root-layout">
-        <IndexedDBProvider> 
-          <SumberDanaProvider> 
-            <TransaksiProvider>
-              <SaldoProvider>
-                {/* 🔥 Jika bukan halaman login, tampilkan Navbar & Sidebar */}
-                {!isAuthPage && <Navbar toggleSidebar={() => setSidebarOpen(!isSidebarOpen)} />}
-                <div className="d-flex">
-                  {/* Tampilkan Sidebar hanya jika bukan halaman login */}
-                  {!isAuthPage && <Sidebar isOpen={isSidebarOpen} />}
-                  <div
-                    className={`content p-4 ${
-                      isSidebarOpen ? "content-shrink" : "content-expand"
-                    }`}
-                    style={{ marginLeft: !isAuthPage ? (isSidebarOpen ? "250px" : "80px") : "0px" }}
-                  >
-                    {children}
+        <IndexedDBProvider>
+          <TokenProvider>
+            <SumberDanaProvider>
+              <TransaksiProvider>
+                <SaldoProvider>
+                  {!isAuthPage && (
+                    <Navbar
+                      className={sidebarOpen ? "sidebar-open" : "sidebar-closed"}
+                    />
+                  )}
+                  <div className={`d-flex ${sidebarOpen ? "sidebar-open" : "sidebar-closed"}`}>
+                    {!isAuthPage && (
+                      <Sidebar
+                        isOpen={sidebarOpen}
+                        setIsOpen={setSidebarOpen}
+                      />
+                    )}
+                    <div className="content-container p-4">
+                      {children}
+                    </div>
                   </div>
-                </div>
-              </SaldoProvider>
-            </TransaksiProvider>
-          </SumberDanaProvider>
+                </SaldoProvider>
+              </TransaksiProvider>
+            </SumberDanaProvider>
+          </TokenProvider>
         </IndexedDBProvider>
       </body>
     </html>
