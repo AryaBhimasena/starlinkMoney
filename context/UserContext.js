@@ -3,8 +3,8 @@ import {
   saveUserData,
   getUserData,
   removeUserData,
-  syncUserDataAfterLogin,
-  fetchAndStoreUserRelatedData,
+  syncUserData,
+  fetchAndStoreAllUsers, // ✅ diganti dari fetchAndStoreUserRelatedData
 } from "../services/indexedDBService";
 
 export const UserContext = createContext();
@@ -24,7 +24,7 @@ export const UserProvider = ({ children }) => {
     await saveUserData(uid);
     const userData = await getUserData();
     setUser(userData);
-    await syncUserDataAfterLogin(uid);
+    await syncUserData(uid);
   };
 
   const logoutUser = async () => {
@@ -33,7 +33,7 @@ export const UserProvider = ({ children }) => {
   };
 
   const fetchUserRelatedData = async (entitasId) => {
-    await fetchAndStoreUserRelatedData(entitasId);
+    await fetchAndStoreAllUsers(entitasId); // ✅ diganti
   };
 
   return (

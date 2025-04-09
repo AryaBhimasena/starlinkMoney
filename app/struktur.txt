@@ -1,0 +1,72 @@
+Folder PATH listing
+Volume serial number is E2A3-DDD3
+C:.
+|   favicon.ico
+|   globals.css
+|   layout.js
+|   page.js
+|   page.module.css
+|   struktur.txt
+|   
++---dashboard
+|       page.js
+|       
++---laporan
+|       page.js
+|       
++---m
+|   |   favicon.ico
+|   |   layout.js
+|   |   page.js
+|   |   
+|   +---components
+|   |       BottomNav.js
+|   |       FabModal.js
+|   |       NavbarMobile.js
+|   |       
+|   +---dashboard
+|   |       page.js
+|   |       
+|   +---laporan
+|   |       page.js
+|   |       
+|   +---pengaturan
+|   |   +---detail-toko
+|   |   |       page.js
+|   |   |       
+|   |   +---pengguna
+|   |   |       page.js
+|   |   |       
+|   |   \---sumber-dana
+|   |           page.js
+|   |           
+|   \---transaksi
+|       +---mini-bank
+|       |       page.js
+|       |       
+|       +---topup-ewallet
+|       |       page.js
+|       |       
+|       +---topup-listrik
+|       |       page.js
+|       |       
+|       \---topup-pulsa
+|               page.js
+|               
++---monitoring
+|       page.js
+|       
++---pengaturan
+|   +---detail-toko
+|   |       page.js
+|   |       
+|   +---pengguna
+|   |       page.js
+|   |       
+|   \---sumberDana
+|           page.js
+|           
+\---transaksi
+        page.js
+        TambahTransaksi.js
+        

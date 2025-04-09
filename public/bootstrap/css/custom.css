@@ -9,18 +9,22 @@
   box-sizing: border-box;
 }
 
-/* File: globals.css atau style global Anda */
+/* Warna latar belakang utama */
 body {
   background-color: #e3f2fd; /* Warna abu pudar */
 }
 
-/* Header styling */
+/* ======================= */
+/*        HEADER           */
+/* ======================= */
+
 .header-container {
   position: fixed;
   top: 50px; /* Sejajar dengan sidebar */
-  left: 240px; /* Default posisi saat sidebar terbuka */
-  width: calc(100% - 240px); /* Mengisi sisa lebar setelah sidebar */
+  left: 240px; /* Posisi default sidebar terbuka */
+  width: calc(100% - 240px);
   display: flex;
+  justify-content: space-between;
   align-items: center;
   background-color: white;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
@@ -28,7 +32,45 @@ body {
   font-weight: bold;
   text-align: left;
   z-index: 10;
-  border-bottom: 1px solid #ddd;
+  border-bottom: 2px solid #ddd;
+}
+
+/* Tombol Tambah Pengguna di Header */
+.header-container .btn-primary {
+  font-size: 14px;
+  font-weight: bold;
+  padding: 8px 16px;
+}
+
+/* ======================= */
+/*  HEADER RESPONSIVE FIX  */
+/* ======================= */
+
+/* Sidebar terbuka */
+.sidebar-open .header-container {
+  left: 240px;
+  width: calc(100% - 240px);
+  transition: all 0.3s ease-in-out;
+}
+
+/* Sidebar tertutup */
+.sidebar-closed .header-container {
+  left: 56px;
+  width: calc(100% - 56px);
+  transition: all 0.3s ease-in-out;
+}
+
+/* Responsive Header untuk layar kecil (mobile & tablet) */
+@media (max-width: 768px) {
+  .header-container {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    margin-top: 110px;
+    padding: 10px 15px;
+    font-size: 14px;
+  }
 }
 
 /* ======================= */
@@ -51,25 +93,6 @@ body {
 .sidebar-closed {
   margin-left: 56px;
 }
-
-/* ======================= */
-/*  HEADER RESPONSIVE FIX  */
-/* ======================= */
-
-/* Saat sidebar terbuka */
-.sidebar-open .header-container {
-  left: 240px;
-  width: calc(100% - 240px);
-  transition: all 0.3s ease-in-out;
-}
-
-/* Saat sidebar tertutup */
-.sidebar-closed .header-container {
-  left: 56px;
-  width: calc(100% - 56px);
-  transition: all 0.3s ease-in-out;
-}
-
 
 /* ======================= */
 /*        CARD STYLE       */
@@ -123,16 +146,6 @@ body {
     width: 100%;
   }
 
-  .header-container {
-    position: relative;
-    top: 0;
-    left: 0;
-    width: 100%;
-    padding: 10px 15px;
-    font-size: 14px;
-    z-index: 10;
-  }
-
   .content-container {
     margin-top: 20px;
     padding: 15px;
@@ -156,14 +169,6 @@ body {
 
 /* Small Devices (≤ 768px) */
 @media (max-width: 768px) {
-  .header-container {
-    position: fixed;
-    margin-top: 110px;
-    left: 0;
-    width: 100%;
-    padding: 12px 18px;
-    font-size: 15px;
-  }
 
   .content-container {
     margin-top: 170px;
@@ -854,22 +859,6 @@ tr:hover {
 .users-table tr:hover {
     background-color: #f1f1f1;
     transition: background 0.2s ease-in-out;
-}
-
-/* Header dengan tombol di kanan */
-.header-container {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding-bottom: 15px;
-    border-bottom: 2px solid #ddd;
-}
-
-/* Tombol Tambah Pengguna */
-.header-container .btn-primary {
-    font-size: 14px;
-    font-weight: bold;
-    padding: 8px 16px;
 }
 
 /* Loading Overlay */

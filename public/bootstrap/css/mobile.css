@@ -1,0 +1,939 @@
+/* Responsive Reset for Scroll */
+html, body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  background: #e9ecef;
+    overflow-y: auto;
+  overflow-x: hidden;
+}
+
+.mobile-header-container {
+  width: 100%;
+  max-width: 390px;
+  margin: 0 auto;
+  padding: 1rem;
+  background-color: #f8f9fa;
+  border-bottom: 1px solid #dee2e6;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.04);
+  position: sticky;
+  top: 0;
+  z-index: 999;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-family: 'Segoe UI', sans-serif;
+}
+
+.mobile-header-title {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #333;
+}
+
+.mobile-header-action {
+  font-size: 1.2rem;
+  color: #007bff;
+  cursor: pointer;
+}
+
+
+.mobile-layout-wrapper {
+  overscroll-behavior-x: contain;
+  overscroll-behavior-y: contain;
+  touch-action: pan-x pan-y;
+  -webkit-overflow-scrolling: touch;
+  overflow-x: hidden; /* atau auto jika kamu ingin bisa swipe horizontal */
+  overflow-y: auto;
+}
+
+/* === Container utama === */
+.mobile-home-container {
+  max-width: 390px;
+  margin: 0 auto;
+  height: 100vh;
+  background-color: #ffffff;
+  box-shadow: 0 0 12px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+  border-radius: 12px;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  padding: 1rem;
+  font-family: 'Segoe UI', sans-serif;
+  padding-bottom: 50px;
+}
+
+/* Wrapper semua elemen mobile */
+.mobile-wrapper {
+  max-width: 390px;
+  margin: 0 auto;
+  min-height: 100vh;
+  background-color: #fff;
+  position: relative;
+  box-shadow: 0 0 8px rgba(0, 0, 0, 0.05);
+  overflow-x: hidden;
+}
+
+/* === Carousel Container === */
+.mobile-carousel {
+  overflow: hidden;
+  position: relative;
+  height: 300px;
+  margin-bottom: 1rem;
+  border-radius: 12px;
+  background-color: #fff; /* background gelap biar neon-nya kelihatan */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid #007bff;
+  transition: all 0.3s ease-in-out;
+}
+
+.mobile-carousel:hover {
+  box-shadow:
+    0 0 1px #007bff,
+    0 0 1px #007bff,
+    0 0 1px #007bff,
+    0 0 1px #007bff;
+}
+
+/* Slide Wrapper */
+.carousel-slides {
+  display: flex;
+  transition: transform 0.5s ease-in-out;
+  width: 300%;
+}
+
+/* Slide Item */
+.carousel-slide {
+  flex: 0 0 100%;
+  padding: 1.5rem;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  height: 100%;
+  box-sizing: border-box;
+  position: relative;
+}
+
+/* Title & Subtitle */
+.carousel-slide h2,
+.carousel-slide h3 {
+  font-size: 1.3rem;
+  margin-bottom: 0.5rem;
+  font-weight: 600;
+  color: #343a40;
+}
+
+/* Deskripsi & List */
+.carousel-slide p,
+.carousel-slide ul {
+  font-size: 0.95rem;
+  margin: 0.25rem 0;
+  line-height: 1.5;
+  color: #495057;
+}
+
+/* Checklist dan Token Pack */
+.checklist,
+.token-pack {
+  list-style: none;
+  padding-left: 0;
+  margin-top: 0.75rem;
+  text-align: left;
+  width: 100%;
+  max-width: 320px;
+}
+
+.checklist li::before {
+  content: "✅";
+  margin-right: 8px;
+  color: #28a745;
+}
+
+.token-pack li::before {
+  content: "🔹";
+  margin-right: 8px;
+  color: #17a2b8;
+}
+
+.token-pack li {
+  margin-bottom: 6px;
+}
+
+/* Bonus highlight */
+.bonus-info {
+  font-weight: bold;
+  color: #007bff;
+  margin-top: 0.75rem;
+  font-size: 0.95rem;
+}
+
+/* Tombol Next (chevron) */
+.btn-next-slide {
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: rgba(255, 255, 255, 0.9);
+  border: none;
+  font-size: 1.5rem;
+  color: #343a40;
+  z-index: 10;
+  padding: 4px 8px;
+  border-radius: 50%;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+  transition: background 0.3s;
+}
+
+.btn-next-slide:hover {
+  background: #f1f3f5;
+}
+
+/* Pagination dots */
+.carousel-dots {
+  position: absolute;
+  bottom: 12px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 6px;
+}
+
+.carousel-dots span {
+  width: 8px;
+  height: 8px;
+  background-color: #ced4da;
+  border-radius: 50%;
+  transition: all 0.3s ease;
+}
+
+.carousel-dots .active {
+  width: 12px;
+  height: 12px;
+  background-color: #007bff;
+}
+
+
+/* === Login Form === */
+.mobile-login-form {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding-bottom: 1rem;
+}
+
+.mobile-login-form h3 {
+  margin-bottom: 1rem;
+  text-align: center;
+}
+
+/* Fix spacing */
+form .form-group {
+  margin-bottom: 1rem;
+}
+
+form input {
+  font-size: 1rem;
+  padding: 0.75rem;
+}
+
+.btn-block {
+  width: 100%;
+  padding: 0.75rem;
+}
+
+@media (max-width: 420px) {
+  .mobile-home-container {
+    border-radius: 0;
+    box-shadow: none;
+    height: 100dvh;
+    padding: 1rem 1rem 2rem;
+  }
+}
+
+/* Bottom Navigation - Mobile */
+.mobile-bottom-nav {
+  position: fixed;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 100%;
+  max-width: 390px;
+  height: 60px;
+  background-color: #ffffff;
+  border-top: 1px solid #dee2e6;
+  z-index: 1000;
+  display: flex;
+  box-shadow: 0 -1px 6px rgba(0, 0, 0, 0.05);
+}
+
+.mobile-bottom-nav-item {
+  flex: 1;
+  text-align: center;
+  padding: 6px 0;
+  color: #6c757d;
+  cursor: pointer;
+  transition: color 0.2s ease;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.mobile-bottom-nav-item svg {
+  margin-bottom: 2px;
+}
+
+.mobile-bottom-nav-item.active {
+  color: #0d6efd;
+  font-weight: 600;
+}
+
+/* Settings Submenu Panel */
+.mobile-settings-panel {
+  position: absolute;
+  bottom: 60px; /* di atas bottom nav */
+  left: 0;
+  right: 0;
+  margin: 0 auto;
+  width: 100%;
+  max-width: 390px;
+  background-color: #ffffff;
+  border-top: 1px solid #dee2e6;
+  box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1);
+  padding: 12px 16px;
+  z-index: 1200;
+  border-top-left-radius: 12px;
+  border-top-right-radius: 12px;
+  animation: slideUp 0.25s ease-out;
+  transition: all 0.3s ease-in-out;
+}
+
+/* Submenu list layout */
+.mobile-settings-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+/* Item dalam panel submenu */
+.mobile-settings-item {
+  padding: 10px 14px;
+  background-color: #f1f3f5;
+  border-radius: 8px;
+  color: #212529;
+  font-weight: 500;
+  text-align: center;
+  transition: background-color 0.2s ease;
+}
+
+.mobile-settings-item:hover {
+  background-color: #e2e6ea;
+}
+
+/* Animasi untuk panel slide dari bawah */
+@keyframes slideUp {
+  from {
+    transform: translateY(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0%);
+    opacity: 1;
+  }
+}
+
+.navbar-mobile {
+  background-color: #f8f9fa;
+  height: 56px;
+  border-bottom: 1px solid #dee2e6;
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+  width: 100%;
+  max-width: 390px;
+  margin: 0 auto;
+}
+
+.token-card-mobile {
+  cursor: pointer;
+}
+
+.token-details-mobile {
+  width: max-content;
+  min-width: 180px;
+}
+
+.fab-container {
+  position: fixed;
+  bottom: 35px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 1100;
+  width: 56px;
+  max-width: 390px;
+  display: flex;
+  justify-content: center;
+}
+
+.fab-button {
+  background-color: #0d6efd;
+  color: white;
+  border: none;
+  border-radius: 50%;
+  width: 56px;
+  height: 56px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  font-size: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1100;
+}
+
+.fab-modal {
+  position: absolute;
+  bottom: 70px;
+  background: white;
+  padding: 10px;
+  border-radius: 12px;
+  width: 220px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.fab-action {
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  gap: 10px;
+  padding: 8px 10px;
+  border-radius: 8px;
+  transition: background 0.2s;
+}
+
+.fab-action:hover {
+  background-color: #f8f9fa;
+}
+
+.fab-icon {
+  color: #0d6efd;
+}
+
+.fab-label {
+  font-size: 14px;
+  color: #333;
+}
+
+/* ======================
+   DASHBOARD - MOBILE STYLE
+========================= */
+
+.dashboard-container {
+  width: 100%;
+  max-width: 390px;
+  margin: 0 auto;
+  padding: 1rem;
+  background-color: #fff;
+  font-family: 'Segoe UI', sans-serif;
+  padding-bottom: 70px;
+}
+
+/* Header */
+.mobile-dashboard-header .welcome-text {
+  font-size: 1.2rem;
+  font-weight: 600;
+  text-align: center;
+  color: #333;
+  margin-bottom: 1rem;
+}
+
+/* Stat List (Ringkasan Finansial) */
+.stat-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  margin-bottom: 2rem;
+}
+
+.stat-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background-color: #f8f9fa;
+  padding: 0.9rem 1rem;
+  border-radius: 10px;
+  border: 1px solid #e0e0e0;
+}
+
+.stat-label {
+  font-size: 0.9rem;
+  color: #666;
+}
+
+.stat-value {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #333;
+}
+
+.stat-value.text-primary {
+  color: #007bff;
+}
+.stat-value.text-success {
+  color: #28a745;
+}
+.stat-value.text-danger {
+  color: #dc3545;
+}
+
+.trend-strip-container {
+  margin-top: 1.5rem;
+  background-color: #fff;
+  border-radius: 12px;
+  border: 1px solid #e0e0e0;
+  padding: 1rem;
+}
+
+.trend-strip-title {
+  font-size: 1rem;
+  font-weight: 600;
+  margin-bottom: 1rem;
+  text-align: center;
+  color: #333;
+}
+
+.trend-strip-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.trend-strip-item {
+  display: flex;
+  justify-content: space-between;
+  background-color: #f8f9fa;
+  padding: 0.6rem 1rem;
+  border-radius: 8px;
+  border: 1px solid #e0e0e0;
+}
+
+.trend-date {
+  color: #666;
+  font-size: 0.9rem;
+}
+
+.trend-value {
+  font-weight: 600;
+  color: #007bff;
+  font-size: 0.95rem;
+}
+
+.trend-stat-row {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 0.4rem;
+  font-size: 0.95rem;
+}
+
+/* Optional Responsive Adjustments */
+@media screen and (max-width: 576px) {
+  .chart-box {
+    padding: 0.75rem;
+  }
+
+  .stat-item {
+    padding: 0.8rem 1rem;
+  }
+
+  .stat-label {
+    font-size: 0.85rem;
+  }
+
+  .stat-value {
+    font-size: 1rem;
+  }
+}
+
+.mobile-laporan-container {
+  padding: 0 1rem;
+}
+
+.mobile-card {
+  background-color: #fff;
+  border-radius: 12px;
+  box-shadow: 0 0 6px rgba(0, 0, 0, 0.05);
+  padding: 1rem;
+}
+
+.mobile-card-body {
+  padding: 0;
+}
+
+.mobile-filter {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.mobile-filter-item {
+  display: flex;
+  flex-direction: column;
+}
+
+.mobile-label {
+  font-weight: 500;
+  margin-bottom: 0.5rem;
+}
+
+.mobile-select {
+  border-radius: 8px;
+  padding: 0.4rem 0.6rem;
+  font-size: 0.95rem;
+}
+
+/* Tombol */
+.mobile-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.mobile-button {
+  width: 100%;
+}
+
+.mobile-export-buttons {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.mobile-export-buttons .btn {
+  flex: 1;
+}
+
+.pengaturan-submenu {
+  border-radius: 12px 12px 0 0;
+}
+.submenu-item:hover {
+  background-color: #f8f9fa;
+}
+
+/* ===============================
+   MINI BANK (Mobile Only)
+   =============================== */
+.mobile-mini-bank-container {
+  padding-bottom: 70px; /* Lebih besar dari tinggi bottomNav */
+}
+
+.mobile-mini-bank-card {
+  background: #fff;
+  padding: 16px;
+  margin: 16px;
+  border-radius: 12px;
+  box-shadow: 0 1px 5px rgba(0,0,0,0.1);
+}
+
+.mobile-form-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 0;
+  border-bottom: 1px solid #eee;
+}
+
+.mobile-form-label {
+  font-size: 14px;
+  font-weight: 500;
+  color: #333;
+  flex: 1;
+}
+
+.mobile-form-input {
+  flex: 2;
+  border: none;
+  outline: none;
+  background: transparent;
+  text-align: right;
+  font-size: 14px;
+  color: #555;
+}
+
+.mobile-form-input:read-only {
+  color: #888;
+}
+
+
+.sumber-dana-container {
+  padding: 1rem;
+  background-color: #f8f9fa;
+  min-height: 100vh;
+}
+
+.sumber-dana-title {
+  font-size: 1.25rem;
+  margin: 0;
+}
+
+.sumber-dana-strip-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.sumber-dana-strip-item {
+  background-color: #fff;
+  padding: 1rem;
+  border-radius: 12px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.sumber-dana-strip-header {
+  display: flex;
+  justify-content: space-between;
+  font-size: 1rem;
+  margin-bottom: 0.5rem;
+}
+
+.sumber-dana-strip-body {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.sumber-dana-strip-actions button {
+  font-size: 0.8rem;
+}
+
+/* Overlay untuk modal */
+.sumber-dana-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(33, 37, 41, 0.7);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1050;
+}
+
+/* Konten modal */
+.sumber-dana-modal-content {
+  background: #fff;
+  border-radius: 1rem;
+  padding: 1.5rem;
+  width: 90%;
+  max-width: 400px;
+  box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
+  animation: fadeInScale 0.3s ease;
+}
+
+/* Judul modal */
+.sumber-dana-modal-title {
+  font-weight: 600;
+  margin-bottom: 1rem;
+  text-align: center;
+}
+
+/* Input modal */
+.sumber-dana-modal-input {
+  font-size: 0.95rem;
+  padding: 0.6rem 0.75rem;
+}
+
+/* Footer tombol */
+.sumber-dana-modal-footer {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+/* Tombol Batal - Merah Soft */
+.sumber-dana-btn-batal {
+  background-color: #f8d7da;
+  color: #842029;
+  border: none;
+  flex: 1;
+  padding: 0.5rem;
+  border-radius: 0.5rem;
+}
+
+.sumber-dana-btn-batal:hover {
+  background-color: #f1b0b7;
+}
+
+/* Tombol Simpan - Hijau */
+.sumber-dana-btn-simpan {
+  background-color: #198754;
+  color: white;
+  border: none;
+  flex: 1;
+  padding: 0.5rem;
+  border-radius: 0.5rem;
+}
+
+.sumber-dana-btn-simpan:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* Animasi muncul */
+@keyframes fadeInScale {
+  0% {
+    opacity: 0;
+    transform: scale(0.9);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+
+/* Mobile Pengguna Page */
+.mobile-pengguna-container {
+  padding: 1rem;
+  background-color: #f7f7f7;
+  min-height: 100vh;
+}
+
+.mobile-pengguna-header {
+  margin-bottom: 1rem;
+}
+
+.mobile-pengguna-title {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #333;
+}
+
+.mobile-pengguna-content {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.mobile-pengguna-strip {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background-color: #fff;
+  border-radius: 10px;
+  padding: 0.75rem 1rem;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+}
+
+.mobile-pengguna-info {
+  flex-grow: 1;
+}
+
+.mobile-pengguna-nama {
+  font-weight: 600;
+  font-size: 1rem;
+  color: #222;
+}
+
+.mobile-pengguna-email {
+  font-size: 0.85rem;
+  color: #555;
+}
+
+.mobile-pengguna-role {
+  font-size: 0.75rem;
+  color: #888;
+}
+
+.mobile-pengguna-actions {
+  display: flex;
+  gap: 0.25rem;
+}
+
+.mobile-pengguna-loading {
+  text-align: center;
+  padding: 2rem;
+  font-size: 0.9rem;
+  color: #777;
+}
+
+/* Modal backdrop */
+.mobile-pengguna-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background-color: rgba(0, 0, 0, 0.3);
+  z-index: 1050;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: fadeIn 0.2s ease-in-out;
+}
+
+/* Modal card animasi */
+.mobile-pengguna-modal-card {
+  background-color: #fff;
+  border-radius: 12px;
+  max-width: 90%;
+  width: 100%;
+  padding: 1.5rem;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+  animation: scaleIn 0.2s ease-out;
+  transform-origin: center;
+}
+
+/* Animasi */
+@keyframes fadeIn {
+  from {
+    background-color: rgba(0, 0, 0, 0);
+  }
+  to {
+    background-color: rgba(0, 0, 0, 0.3);
+  }
+}
+
+@keyframes scaleIn {
+  0% {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+
+/* Halaman Mobile: Identitas Toko */
+.mobile-identitas-toko-header {
+  background-color: #ffffff;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+  z-index: 100;
+}
+
+.mobile-identitas-toko-section {
+  background-color: #ffffff;
+  border-radius: 12px;
+  padding: 16px;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04);
+}
+
+.mobile-identitas-toko-input {
+  font-size: 0.95rem;
+  padding: 10px;
+}
+
+.mobile-identitas-toko-foto-preview img {
+  object-fit: cover;
+  width: 100%;
+}
