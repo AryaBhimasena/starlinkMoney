@@ -973,3 +973,15 @@ form input {
   object-fit: cover;
   width: 100%;
 }
+
+.mobile-saldo-container {
+  padding: 0 1rem;
+}
+
+.mobile-saldo-card {
+  transition: all 0.2s ease;
+}
+
+.mobile-saldo-card:hover {
+  background-color: #f9f9f9;
+}

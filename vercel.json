@@ -1,11 +1,11 @@
 {
   "rewrites": [
     {
-      "source": "/(.*)",
+      "source": "/((?!m|_next|api|favicon.ico|bootstrap|public).*)",
       "has": [
         {
           "type": "host",
-          "value": "m-starlinkmoney.vercel.app/m"
+          "value": "m-starlinkmoney.vercel.app"
         }
       ],
       "destination": "/m/$1"

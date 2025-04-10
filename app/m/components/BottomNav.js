@@ -6,10 +6,10 @@ import {
   House,
   FileText,
   Settings,
-  Wallet, // Ganti dari User ke Wallet
+  Wallet,
 } from "lucide-react";
 
-export default function BottomNav() {
+export default function BottomNav({ onMenuToggle }) {
   const pathname = usePathname();
   const router = useRouter();
   const [active, setActive] = useState("");
@@ -20,6 +20,7 @@ export default function BottomNav() {
     setActive(pathname);
   }, [pathname]);
 
+  // Handle klik luar settings panel
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (
@@ -27,6 +28,7 @@ export default function BottomNav() {
         !settingsRef.current.contains(event.target)
       ) {
         setShowSettingsPanel(false);
+        if (onMenuToggle) onMenuToggle(false); // 🆕 Hide panel → show FAB
       }
     };
 
@@ -44,7 +46,7 @@ export default function BottomNav() {
   const navItems = [
     { label: "Beranda", icon: <House size={20} />, path: "/m/dashboard" },
     { label: "Laporan", icon: <FileText size={20} />, path: "/m/laporan" },
-    { label: "Saldo", icon: <Wallet size={20} />, path: "/m/pengaturan/sumber-dana" }, // ✅ Sudah diganti
+    { label: "Saldo", icon: <Wallet size={20} />, path: "/m/saldo" },
     { label: "Pengaturan", icon: <Settings size={20} />, path: "/m/pengaturan" },
   ];
 
@@ -52,6 +54,15 @@ export default function BottomNav() {
     router.push(path);
     setActive(path);
     setShowSettingsPanel(false);
+    if (onMenuToggle) onMenuToggle(false); // 🆕 Pindah menu → show FAB
+  };
+
+  const toggleSettingsPanel = () => {
+    setShowSettingsPanel((prev) => {
+      const next = !prev;
+      if (onMenuToggle) onMenuToggle(next); // 🆕 Tampilkan atau sembunyikan FAB
+      return next;
+    });
   };
 
   return (
@@ -74,6 +85,12 @@ export default function BottomNav() {
             >
               Detail Toko
             </div>
+            <div
+              className="mobile-settings-item text-dark fw-semibold"
+              onClick={() => handleNav("/m/pengaturan/sumber-dana")}
+            >
+              Sumber Dana
+            </div>
           </div>
         </div>
       )}
@@ -86,11 +103,7 @@ export default function BottomNav() {
               active === item.path ? "active" : ""
             }`}
             onClick={() => {
-              if (item.label === "Pengaturan") {
-                setShowSettingsPanel((prev) => !prev);
-              } else {
-                handleNav(item.path);
-              }
+              item.label === "Pengaturan" ? toggleSettingsPanel() : handleNav(item.path);
             }}
           >
             {item.icon}

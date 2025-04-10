@@ -7,8 +7,7 @@ import {
   updateSumberDana,
   hapusSumberDana,
 } from "../../../../services/sumberDanaService";
-import { getAuth, onAuthStateChanged } from "firebase/auth";
-import { getFirestore, doc, getDoc } from "firebase/firestore";
+import { getUserData } from "../../../../services/indexedDBService";
 
 const MobileSumberDana = () => {
   const [showModal, setShowModal] = useState(false);
@@ -19,27 +18,16 @@ const MobileSumberDana = () => {
   const [nominal, setNominal] = useState("");
   const [data, setData] = useState([]);
   const [entitasId, setEntitasId] = useState(null);
-  const [user, setUser] = useState(null);
   const [isFormValid, setIsFormValid] = useState(false);
 
   useEffect(() => {
-    const auth = getAuth();
-    const db = getFirestore();
-    const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
-      if (currentUser) {
-        setUser(currentUser);
-        const userDocRef = doc(db, "users", currentUser.uid);
-        const userDocSnap = await getDoc(userDocRef);
-        if (userDocSnap.exists()) {
-          const userData = userDocSnap.data();
-          setEntitasId(userData.entitasId);
-        }
-      } else {
-        setUser(null);
-        setEntitasId(null);
+    const fetchEntitasId = async () => {
+      const user = await getUserData();
+      if (user?.entitasId) {
+        setEntitasId(user.entitasId);
       }
-    });
-    return () => unsubscribe();
+    };
+    fetchEntitasId();
   }, []);
 
   useEffect(() => {
@@ -147,54 +135,52 @@ const MobileSumberDana = () => {
         ))}
       </div>
 
-      {/* Modal */}
       {showModal && (
-  <div className="sumber-dana-modal-overlay">
-    <div className="sumber-dana-modal-content">
-      <h5 className="sumber-dana-modal-title">
-        {isEdit ? "Edit" : "Tambah"} Sumber Dana
-      </h5>
-      <input
-        className="form-control sumber-dana-modal-input mb-2"
-        type="text"
-        placeholder="Nama Sumber Dana"
-        value={sumberDana}
-        onChange={(e) => setSumberDana(e.target.value)}
-      />
-      <select
-        className="form-select sumber-dana-modal-input mb-2"
-        value={kategori}
-        onChange={(e) => setKategori(e.target.value)}
-      >
-        <option value="Bank">Bank</option>
-        <option value="E-Wallet">E-Wallet</option>
-      </select>
-      <input
-        className="form-control sumber-dana-modal-input mb-3"
-        type="number"
-        placeholder="Nominal Saldo"
-        value={nominal}
-        onChange={(e) => setNominal(e.target.value)}
-      />
-      <div className="sumber-dana-modal-footer">
-        <button
-          className="btn sumber-dana-btn-batal"
-          onClick={() => setShowModal(false)}
-        >
-          Batal
-        </button>
-        <button
-          className="btn sumber-dana-btn-simpan"
-          disabled={!isFormValid}
-          onClick={handleAddOrUpdate}
-        >
-          {isEdit ? "Update" : "Simpan"}
-        </button>
-      </div>
-    </div>
-  </div>
-)}
-
+        <div className="sumber-dana-modal-overlay">
+          <div className="sumber-dana-modal-content">
+            <h5 className="sumber-dana-modal-title">
+              {isEdit ? "Edit" : "Tambah"} Sumber Dana
+            </h5>
+            <input
+              className="form-control sumber-dana-modal-input mb-2"
+              type="text"
+              placeholder="Nama Sumber Dana"
+              value={sumberDana}
+              onChange={(e) => setSumberDana(e.target.value)}
+            />
+            <select
+              className="form-select sumber-dana-modal-input mb-2"
+              value={kategori}
+              onChange={(e) => setKategori(e.target.value)}
+            >
+              <option value="Bank">Bank</option>
+              <option value="E-Wallet">E-Wallet</option>
+            </select>
+            <input
+              className="form-control sumber-dana-modal-input mb-3"
+              type="number"
+              placeholder="Nominal Saldo"
+              value={nominal}
+              onChange={(e) => setNominal(e.target.value)}
+            />
+            <div className="sumber-dana-modal-footer">
+              <button
+                className="btn sumber-dana-btn-batal"
+                onClick={() => setShowModal(false)}
+              >
+                Batal
+              </button>
+              <button
+                className="btn sumber-dana-btn-simpan"
+                disabled={!isFormValid}
+                onClick={handleAddOrUpdate}
+              >
+                {isEdit ? "Update" : "Simpan"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

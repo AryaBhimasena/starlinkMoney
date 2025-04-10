@@ -1,36 +1,38 @@
-import { getFromIndexedDB, updateIndexedDB } from "../lib/indexedDBService";
+import { getSaldoData, saveSaldoBySumberDana } from "./indexedDBService";
 
-// Fungsi untuk memperbarui saldo di IndexedDB
+// Fungsi untuk memperbarui saldo di IndexedDB berdasarkan transaksi
 export const updateSaldo = async (entitasId, transaksiData) => {
   try {
-    // Ambil saldo dari IndexedDB
-    const saldo = await getFromIndexedDB("saldo", entitasId);
-    if (!saldo) {
-      throw new Error("Saldo tidak ditemukan!");
+    // Ambil semua data saldo
+    const allSaldo = await getSaldoData();
+
+    // Cari saldo sesuai entitas dan sumber dana
+    const saldoItem = allSaldo.find(item =>
+      item.entitasId === entitasId &&
+      (item.sumberDana === transaksiData.sumberDana ||
+        (transaksiData.sumberDana === "Uang Kas" && item.sumberDana.toLowerCase() === "uang kas"))
+    );
+
+    if (!saldoItem) {
+      throw new Error("❌ Saldo tidak ditemukan untuk sumber dana tersebut.");
     }
 
-    let saldoUpdate = {};
-    
-    // Tentukan perubahan saldo berdasarkan jenis transaksi
+    let saldoBaru = saldoItem.saldo;
+
+    // Perhitungan berdasarkan jenis transaksi
     if (transaksiData.jenis === "Kas Masuk") {
-      saldoUpdate = {
-        ...saldo.sumber_dana,
-        [transaksiData.sumberDana]: (saldo.sumber_dana[transaksiData.sumberDana] || 0) + transaksiData.nominal,
-      };
+      saldoBaru += transaksiData.nominal;
     } else if (transaksiData.jenis === "Kas Keluar") {
-      if ((saldo.sumber_dana[transaksiData.sumberDana] || 0) < transaksiData.nominal) {
-        throw new Error("Saldo tidak cukup!");
+      if (saldoBaru < transaksiData.nominal) {
+        throw new Error("❌ Saldo tidak mencukupi.");
       }
-      saldoUpdate = {
-        ...saldo.sumber_dana,
-        [transaksiData.sumberDana]: saldo.sumber_dana[transaksiData.sumberDana] - transaksiData.nominal,
-      };
+      saldoBaru -= transaksiData.nominal;
     }
 
-    // Perbarui saldo di IndexedDB
-    await updateIndexedDB("saldo", { ...saldo, sumber_dana: saldoUpdate, updated_at: Date.now() });
+    // Simpan saldo baru
+    await saveSaldoBySumberDana(transaksiData.sumberDana, saldoBaru);
   } catch (error) {
-    console.error("Error memperbarui saldo:", error);
+    console.error("❌ Error memperbarui saldo:", error);
     throw error;
   }
 };
@@ -46,10 +48,15 @@ export const saveTransaksi = async (entitasId, transaksiData) => {
       tanggal: Date.now(),
       status: "berhasil",
     };
-    
-    await updateIndexedDB("transaksi", transaksi);
+
+    const db = await openDB();
+    const tx = db.transaction("transaksi", "readwrite");
+    const store = tx.objectStore("transaksi");
+
+    await store.add(transaksi);
+    await tx.done;
   } catch (error) {
-    console.error("Error mencatat transaksi:", error);
+    console.error("❌ Error mencatat transaksi:", error);
     throw error;
   }
 };

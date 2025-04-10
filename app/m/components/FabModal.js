@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Plus, X, Send, Smartphone, Zap, Wallet } from "lucide-react";
 
-export default function FabModal() {
+export default function FabModal({ hidden = false }) {
   const [open, setOpen] = useState(false);
   const router = useRouter();
 
@@ -38,27 +38,29 @@ export default function FabModal() {
     router.push(href);
   };
 
+  // ⛔ Sembunyikan FAB jika panel bawah terbuka
+  if (hidden) return null;
+
   return (
-    <>
-      <div className="fab-container">
-        <button className="fab-button" onClick={toggleModal}>
-          {open ? <X size={24} /> : <Plus size={24} />}
-        </button>
-        {open && (
-          <div className="fab-modal shadow">
-            {actions.map((action, idx) => (
-              <div
-                key={idx}
-                className="fab-action"
-                onClick={() => handleAction(action.href)}
-              >
-                <div className="fab-icon">{action.icon}</div>
-                <div className="fab-label">{action.label}</div>
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
-    </>
+    <div className="fab-container">
+      <button className="fab-button" onClick={toggleModal}>
+        {open ? <X size={24} /> : <Plus size={24} />}
+      </button>
+
+      {open && (
+        <div className="fab-modal shadow">
+          {actions.map((action, idx) => (
+            <div
+              key={idx}
+              className="fab-action"
+              onClick={() => handleAction(action.href)}
+            >
+              <div className="fab-icon">{action.icon}</div>
+              <div className="fab-label">{action.label}</div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
   );
 }

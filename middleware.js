@@ -9,27 +9,27 @@ export function middleware(req) {
   const isMobile = /mobile|android|iphone|ipad|ipod/i.test(userAgent);
   const hostname = req.headers.get("host");
 
-  // ✅ Redirect dari domain utama ke subdomain mobile (m-dot) jika akses dari HP
+  // ✅ Jika akses dari HP ke domain utama, redirect ke subdomain mobile
   if (
     hostname === "starlinkmoney.vercel.app" &&
     isMobile &&
-    !url.pathname.startsWith("/api") &&
-    !url.pathname.startsWith("/m")
+    !url.pathname.startsWith("/m") &&
+    !url.pathname.startsWith("/api")
   ) {
-    return NextResponse.redirect("https://m-starlinkmoney.vercel.app/m");
+    return NextResponse.redirect("https://m-starlinkmoney.vercel.app");
   }
 
-  // ✅ Jika user sudah di subdomain mobile, arahkan semua path ke /m/*
+  // ✅ Rewrite semua path di subdomain mobile ke /m/*
   if (
     hostname === "m-starlinkmoney.vercel.app" &&
     !url.pathname.startsWith("/m") &&
     !url.pathname.startsWith("/api")
   ) {
     url.pathname = `/m${url.pathname}`;
-    return NextResponse.rewrite(url); // 👈 rewrite ke /m tanpa ubah URL di browser
+    return NextResponse.rewrite(url); // tidak ubah URL di browser
   }
 
-  // ✅ Auth: Jika belum login dan bukan halaman utama, redirect ke /
+  // ✅ Auth check: redirect ke "/" jika belum login
   if (!token && url.pathname !== "/") {
     return NextResponse.redirect(new URL("/", req.url));
   }
@@ -46,7 +46,7 @@ export function middleware(req) {
   return NextResponse.next();
 }
 
-// ✅ Pastikan tidak block asset & API
+// ✅ Jangan blokir asset, API, favicon, dll
 export const config = {
   matcher: ["/((?!_next|api|login|public|bootstrap|favicon.ico).*)"],
 };

@@ -1,7 +1,7 @@
 "use client";
 
 import { usePathname } from "next/navigation";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import NavbarMobile from "./components/NavbarMobile";
 import BottomNav from "./components/BottomNav";
 import FabModal from "./components/FabModal";
@@ -20,6 +20,8 @@ export default function MobileLayout({ children }) {
   const pathname = usePathname();
   const isAuthPage = pathname === "/m";
 
+  const [isBottomMenuOpen, setIsBottomMenuOpen] = useState(false);
+
   useEffect(() => {
     window.scrollTo(0, 0);
   }, [pathname]);
@@ -34,15 +36,14 @@ export default function MobileLayout({ children }) {
                 <div className="mobile-wrapper">
                   {!isAuthPage && <NavbarMobile />}
 
-                  {/* Kontainer Scrollable */}
                   <div className="mobile-scroll-container">
                     <div className="mobile-content p-3">{children}</div>
                   </div>
 
                   {!isAuthPage && (
                     <>
-                      <BottomNav />
-                      <FabModal />
+                      <BottomNav onMenuToggle={setIsBottomMenuOpen} />
+                      <FabModal hidden={isBottomMenuOpen} />
                     </>
                   )}
                 </div>
