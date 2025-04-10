@@ -23,10 +23,19 @@ const PageTransaksi = () => {
     return angka ? `Rp ${angka.toLocaleString("id-ID")}` : "Rp 0";
   };
 
-  const refreshTransaksi = async () => {
-    const data = await getAllTransaksi();
-    setTransaksiList(data);
-  };
+const refreshTransaksi = async () => {
+  const data = await getAllTransaksi();
+
+  const sortedData = [...data].sort((a, b) => {
+    const dateA = a.tanggal ? new Date(a.tanggal) : new Date(0);
+    const dateB = b.tanggal ? new Date(b.tanggal) : new Date(0);
+    return dateB.getTime() - dateA.getTime(); // 🔹 terbaru ke paling lama
+  });
+
+  setTransaksiList(sortedData);
+};
+
+
 
   useEffect(() => {
     refreshTransaksi();
@@ -64,9 +73,11 @@ const PageTransaksi = () => {
       <div className="content content-expand">
         <div className="card shadow-sm p-3">
           <div className="card-body">
-            <button className="btn btn-primary mb-3" onClick={openModal}>
-              Tambah Transaksi
-            </button>
+            <div className="d-flex justify-content-end mb-3">
+			  <button className="btn btn-primary" onClick={openModal}>
+				Tambah Transaksi
+			  </button>
+			</div>
 
             <div className="row">
               <div className="col-md-3 mb-3">

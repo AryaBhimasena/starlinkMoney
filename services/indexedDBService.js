@@ -15,17 +15,25 @@ export async function openDB() {
   return new Promise((resolve, reject) => {
     const request = indexedDB.open(DB_NAME, DB_VERSION);
 
-    request.onupgradeneeded = function (event) {
-      const db = event.target.result;
+request.onupgradeneeded = function (event) {
+  const db = event.target.result;
 
-      // Buat hanya jika object store belum ada
-      STORE_NAMES.forEach((storeName) => {
-        if (!db.objectStoreNames.contains(storeName)) {
-          db.createObjectStore(storeName, { keyPath: "id" }); // Hapus autoIncrement
-          console.log(`✅ Object Store '${storeName}' berhasil dibuat.`);
-        }
-      });
-    };
+  // Buat object store dari daftar
+  STORE_NAMES.forEach((storeName) => {
+    if (!db.objectStoreNames.contains(storeName)) {
+      db.createObjectStore(storeName, { keyPath: "id" });
+      console.log(`✅ Object Store '${storeName}' berhasil dibuat.`);
+    }
+  });
+
+  // Tambahkan pembuatan tempTransaksi DI SINI
+  if (!db.objectStoreNames.contains("tempTransaksi")) {
+    db.createObjectStore("tempTransaksi", {
+      keyPath: "id",
+    });
+    console.log("✅ Object Store 'tempTransaksi' berhasil dibuat.");
+  }
+};
 
     request.onsuccess = function (event) {
       resolve(event.target.result);
@@ -295,6 +303,50 @@ export async function saveToIndexedDB(STORE_NAME, data) {
         };
     });
 }
+
+// Simpan noReff sementara
+export const saveTempReff = async (entitasId, noReff) => {
+  return new Promise((resolve, reject) => {
+    const request = indexedDB.open("StarlinkMoneyDB", 2);
+    request.onsuccess = (event) => {
+      const db = event.target.result;
+      const tx = db.transaction("tempTransaksi", "readwrite");
+      const store = tx.objectStore("tempTransaksi");
+
+      const today = new Date().toISOString().split("T")[0];
+      const key = `${entitasId}_${today}`;
+
+      const data = { id: key, noReff };
+      store.put(data);
+
+      tx.oncomplete = () => resolve(true);
+      tx.onerror = () => reject(tx.error);
+    };
+    request.onerror = () => reject(request.error);
+  });
+};
+
+// Ambil noReff sementara
+export const getTempReff = async (entitasId) => {
+  return new Promise((resolve, reject) => {
+    const request = indexedDB.open("StarlinkMoneyDB", 2);
+    request.onsuccess = (event) => {
+      const db = event.target.result;
+      const tx = db.transaction("tempTransaksi", "readonly");
+      const store = tx.objectStore("tempTransaksi");
+
+      const today = new Date().toISOString().split("T")[0];
+      const key = `${entitasId}_${today}`;
+      const getRequest = store.get(key);
+
+      getRequest.onsuccess = () => {
+        resolve(getRequest.result?.noReff || null);
+      };
+      getRequest.onerror = () => reject(getRequest.error);
+    };
+    request.onerror = () => reject(request.error);
+  });
+};
 
 
 // Fungsi untuk USER
@@ -658,26 +710,16 @@ export const getJumlahTransaksi = () => {
 
       getAllRequest.onsuccess = (e) => {
         const transaksiData = e.target.result;
+        const hariIni = new Date().toISOString().split("T")[0]; // yyyy-mm-dd
 
-        // Filter hanya transaksi bulan ini
-        const bulanIni = new Date().getMonth() + 2; // 2-22
-        const tahunIni = new Date().getFullYear();
-        const filtered = transaksiData.filter((item) => {
-          const tgl = new Date(item.tanggal);
-          return tgl.getMonth() + 2 === bulanIni && tgl.getFullYear() === tahunIni;
-        });
-
-        resolve(filtered.length); // Mengembalikan jumlah transaksi bulan ini
+        const filtered = transaksiData.filter(item => item.tanggal === hariIni);
+        resolve(filtered.length);
       };
 
-      getAllRequest.onerror = () => {
-        reject("Gagal mengambil data transaksi.");
-      };
+      getAllRequest.onerror = () => reject("Gagal mengambil data transaksi.");
     };
 
-    request.onerror = () => {
-      reject("Gagal membuka database.");
-    };
+    request.onerror = () => reject("Gagal membuka database.");
   });
 };
 
@@ -686,33 +728,26 @@ export const getTotalOmzet = async () => {
   try {
     const db = await openDB();
     const transaksiStore = db.transaction("transaksi", "readonly").objectStore("transaksi");
+    const hariIni = new Date().toISOString().split("T")[0];
+    let totalOmzet = 0;
 
     return new Promise((resolve, reject) => {
       const request = transaksiStore.openCursor();
-      let totalOmzet = 0;
-
-      const bulanIni = new Date().getMonth() + 2;
-      const tahunIni = new Date().getFullYear();
 
       request.onsuccess = (event) => {
         const cursor = event.target.result;
         if (cursor) {
           const { nominal = 0, profit = 0, tanggal } = cursor.value;
-          const tgl = new Date(tanggal);
-
-          if (tgl.getMonth() + 2 === bulanIni && tgl.getFullYear() === tahunIni) {
+          if (tanggal === hariIni) {
             totalOmzet += Number(nominal) + Number(profit);
           }
-
           cursor.continue();
         } else {
           resolve(totalOmzet);
         }
       };
 
-      request.onerror = (event) => {
-        reject(event.target.error);
-      };
+      request.onerror = (event) => reject(event.target.error);
     });
   } catch (error) {
     console.error("Gagal mengambil total omzet:", error);
@@ -726,11 +761,7 @@ export const getTotalProfit = async () => {
     const db = await openDB();
     const tx = db.transaction("transaksi", "readonly");
     const store = tx.objectStore("transaksi");
-
-    const now = new Date();
-    const bulanIni = now.getMonth() + 1; // ✅ yang benar
-    const tahunIni = now.getFullYear();
-
+    const hariIni = new Date().toISOString().split("T")[0];
     let total = 0;
 
     return new Promise((resolve, reject) => {
@@ -740,18 +771,10 @@ export const getTotalProfit = async () => {
         const cursor = event.target.result;
         if (cursor) {
           const item = cursor.value;
-
-          if (item.tanggal) {
-            const [yearStr, monthStr] = item.tanggal.split("-");
-            const itemBulan = parseInt(monthStr);
-            const itemTahun = parseInt(yearStr);
-
-            if (itemBulan === bulanIni && itemTahun === tahunIni) {
-              const profit = parseInt(item.profit ?? item.tarif ?? 0) || 0;
-              total += profit;
-            }
+          if (item.tanggal === hariIni) {
+            const profit = parseInt(item.profit ?? item.tarif ?? 0) || 0;
+            total += profit;
           }
-
           cursor.continue();
         } else {
           resolve(total);
@@ -872,6 +895,42 @@ export async function getTransaksiHarian() {
     request.onerror = (event) => {
       reject(event.target.error);
     };
+  });
+}
+
+export async function getTransaksiHariIni() {
+  const db = await openDB();
+  const tx = db.transaction("transaksi", "readonly");
+  const store = tx.objectStore("transaksi");
+
+  const hariIni = new Date().toISOString().split("T")[0];
+  const result = [];
+
+  return new Promise((resolve, reject) => {
+    const request = store.openCursor();
+
+    request.onsuccess = (event) => {
+      const cursor = event.target.result;
+      if (cursor) {
+        const item = cursor.value;
+
+        if (item.tanggal === hariIni) {
+          // Tambahkan data profit jika belum ada
+          const calculatedProfit =
+            parseInt(item.hargaJual || 0) - parseInt(item.hargaModal || 0);
+          result.push({
+            ...item,
+            profit: item.profit ?? (isNaN(calculatedProfit) ? 0 : calculatedProfit),
+          });
+        }
+
+        cursor.continue();
+      } else {
+        resolve(result); // Kembalikan array transaksi hari ini
+      }
+    };
+
+    request.onerror = (event) => reject(event.target.error);
   });
 }
 
@@ -1083,65 +1142,67 @@ export async function getSaldoData() {
   }
 }
 
-export async function getSaldoBySumberDana(sumberDana) {
+export async function getSaldoBySumberDana(key) {
   try {
     const db = await openDB();
     const tx = db.transaction("saldo", "readonly");
     const store = tx.objectStore("saldo");
 
-    // 🔍 Cari saldo berdasarkan field "sumberDana"
-    const saldoData = await new Promise((resolve, reject) => {
+    const allSaldo = await new Promise((resolve, reject) => {
       const request = store.getAll();
-      request.onsuccess = () => {
-        const result = request.result.filter(item => item.sumberDana === sumberDana);
-        resolve(result);
-      };
+      request.onsuccess = () => resolve(request.result);
       request.onerror = () => reject(request.error);
     });
 
-    return saldoData;
+    const result = allSaldo.filter(item =>
+      key === "Uang Kas"
+        ? item.sumberDana.toLowerCase() === "uang kas"
+        : item.id === key || item.sumberDana === key
+    );
+
+    return result;
   } catch (error) {
     console.error("❌ Error fetching saldo by sumberDana:", error);
     return [];
   }
 }
 
-export async function saveSaldoBySumberDana(sumberDana, newSaldo) {
+export async function saveSaldoBySumberDana(key, newSaldo) {
   try {
     const db = await openDB();
     const tx = db.transaction("saldo", "readwrite");
     const store = tx.objectStore("saldo");
 
-    // 🔍 Cari data saldo berdasarkan sumberDana
-    const saldoData = await new Promise((resolve, reject) => {
+    const allSaldo = await new Promise((resolve, reject) => {
       const request = store.getAll();
-      request.onsuccess = () => {
-        const result = request.result.find(item => item.sumberDana === sumberDana);
-        resolve(result);
-      };
+      request.onsuccess = () => resolve(request.result);
       request.onerror = () => reject(request.error);
     });
 
+    const saldoData = allSaldo.find(item =>
+      key === "Uang Kas"
+        ? item.sumberDana.toLowerCase() === "uang kas"
+        : item.id === key || item.sumberDana === key
+    );
+
     if (!saldoData) {
-      throw new Error(`❌ Sumber Dana '${sumberDana}' tidak ditemukan dalam IndexedDB.`);
+      throw new Error(`❌ Sumber Dana '${key}' tidak ditemukan dalam IndexedDB.`);
     }
 
-    // 🛑 Jika saldo tidak berubah, jangan update timestamp
     if (saldoData.saldo === newSaldo) {
-      console.log(`⚠ Saldo untuk '${sumberDana}' tidak berubah, tidak perlu update timestamp.`);
+      console.log(`⚠ Saldo untuk '${key}' tidak berubah, tidak perlu update timestamp.`);
       await tx.done;
       return;
     }
 
-    // 🔄 Update saldo & timestamp hanya jika saldo berubah
-    const updatedSaldo = { 
-      ...saldoData, 
-      saldo: newSaldo, 
-      timestamp: Date.now() 
+    const updatedSaldo = {
+      ...saldoData,
+      saldo: newSaldo,
+      timestamp: Date.now()
     };
     await store.put(updatedSaldo);
 
-    console.log("✅ Saldo berhasil diperbarui untuk sumberDana:", sumberDana);
+    console.log("✅ Saldo berhasil diperbarui untuk:", key);
     await tx.done;
   } catch (error) {
     console.error("❌ Error saat menyimpan saldo:", error);

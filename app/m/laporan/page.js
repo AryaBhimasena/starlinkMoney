@@ -1,14 +1,17 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useContext } from "react";
 import { getAllData } from "../../../services/indexedDBService";
 import * as XLSX from "xlsx";
 import jsPDF from "jspdf";
 import "jspdf-autotable";
 import Swal from "sweetalert2";
 import "sweetalert2/dist/sweetalert2.min.css"; // opsional untuk style
+import { gunakanToken } from "../../../services/tokenService"; // ✅ Tambahkan ini
+import { TokenContext } from "../../../context/tokenContext"; // atau path sesuai struktur kamu
 
 const PageLaporan = () => {
+  const { setTotalToken } = useContext(TokenContext);
   const [transaksiList, setTransaksiList] = useState([]);
   const [filteredData, setFilteredData] = useState([]);
   const [periode, setPeriode] = useState("bulanan");
@@ -45,150 +48,188 @@ const generateTotalRow = () => {
   return totalRow;
 };
 
-  const handleExportExcel = () => {
-    const namaToko = "Toko Contoh";
-    const tanggalAwal = new Date(tahun, bulan - 1, 1);
-    const tanggalAkhir = new Date(tahun, bulan, 0);
-    const formatter = new Intl.DateTimeFormat("id-ID", {
-      day: "numeric",
-      month: "long",
-      year: "numeric",
-    });
-    const periodeString = `${tanggalAwal.getDate()} - ${tanggalAkhir.getDate()} ${formatter.format(tanggalAkhir).split(" ")[1]} ${tahun}`;
-
-    const headerRows = [
-      ["Laporan Usaha"],
-      [namaToko],
-      [`Periode: ${periodeString}`],
-      [],
-    ];
-
-    const tableHeader = [
-      "Tanggal",
-      "Transfer",
-      "Tarik Tunai",
-      "Setor Tunai",
-      "Top Up",
-      "Pengeluaran",
-      "Total",
-      "Omzet",
-      "Profit",
-    ];
-
-    const tableBody = filteredData.map((row) => [
-      row.tanggal,
-      row.Transfer,
-      row.TarikTunai,
-      row.SetorTunai,
-      row.TopUp,
-      row.Pengeluaran,
-      row.Total,
-      formatRupiah(row.Omzet),
-      formatRupiah(row.Profit),
-    ]);
-
-    const finalData = [...headerRows, tableHeader, ...tableBody, totalRow];
-    const ws = XLSX.utils.aoa_to_sheet(finalData);
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, "Laporan");
-    XLSX.writeFile(wb, `Laporan_Usaha_${periode}_${bulan}_${tahun}.xlsx`);
-
+const handleExportExcel = async () => {
+  const result = await gunakanToken(3, "Export Laporan Excel"); // ✅ gunakanToken (misalnya butuh 2 token)
+  if (!result.success) {
     Swal.fire({
-      icon: "success",
-      title: "Export Excel berhasil!",
-      showConfirmButton: false,
-      timer: 1500,
+      icon: "error",
+      title: "Export Gagal",
+      text: result.error || "Token tidak mencukupi.",
     });
-  };
+    return;
+  }
 
-  const handleExportPDF = () => {
-    const doc = new jsPDF("p", "mm", "a4");
-    const namaToko = "Toko Contoh";
-    const tanggalAwal = new Date(tahun, bulan - 1, 1);
-    const tanggalAkhir = new Date(tahun, bulan, 0);
-    const formatter = new Intl.DateTimeFormat("id-ID", {
-      day: "numeric",
-      month: "long",
-      year: "numeric",
-    });
-    const periodeString = `${tanggalAwal.getDate()} - ${tanggalAkhir.getDate()} ${formatter.format(tanggalAkhir).split(" ")[1]} ${tahun}`;
+  const namaToko = "Toko Contoh";
+  const tanggalAwal = new Date(tahun, bulan - 1, 1);
+  const tanggalAkhir = new Date(tahun, bulan, 0);
+  const formatter = new Intl.DateTimeFormat("id-ID", {
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+  });
+  const periodeString = `${tanggalAwal.getDate()} - ${tanggalAkhir.getDate()} ${formatter.format(tanggalAkhir).split(" ")[1]} ${tahun}`;
 
-    doc.setFontSize(14);
-    doc.text("Laporan Usaha", 105, 15, null, null, "center");
-    doc.setFontSize(11);
-    doc.text(namaToko, 105, 22, null, null, "center");
-    doc.text(`Periode: ${periodeString}`, 105, 28, null, null, "center");
+  const headerRows = [
+    ["Laporan Usaha"],
+    [namaToko],
+    [`Periode: ${periodeString}`],
+    [],
+  ];
 
-    const tableColumns = [
-      "Tanggal",
-      "Transfer",
-      "Tarik Tunai",
-      "Setor Tunai",
-      "Top Up",
-      "Pengeluaran",
-      "Total",
-      "Omzet",
-      "Profit",
-    ];
+  const tableHeader = [
+    "Tanggal",
+    "Transfer",
+    "Tarik Tunai",
+    "Setor Tunai",
+    "Top Up",
+    "Pengeluaran",
+    "Total",
+    "Omzet",
+    "Profit",
+  ];
 
-    const tableRows = filteredData.map((row) => [
-      row.tanggal,
-      row.Transfer,
-      row.TarikTunai,
-      row.SetorTunai,
-      row.TopUp,
-      row.Pengeluaran,
-      row.Total,
-      formatRupiah(row.Omzet),
-      formatRupiah(row.Profit),
-    ]);
+  const tableBody = filteredData.map((row) => [
+    row.tanggal,
+    row.Transfer,
+    row.TarikTunai,
+    row.SetorTunai,
+    row.TopUp,
+    row.Pengeluaran,
+    row.Total,
+    formatRupiah(row.Omzet),
+    formatRupiah(row.Profit),
+  ]);
 
-    tableRows.push(totalRow);
+  const totalRow = [
+    "Total",
+    ...["Transfer", "TarikTunai", "SetorTunai", "TopUp", "Pengeluaran", "Total"].map((key) =>
+      filteredData.reduce((sum, i) => sum + i[key], 0)
+    ),
+    formatRupiah(filteredData.reduce((sum, i) => sum + i["Omzet"], 0)),
+    formatRupiah(filteredData.reduce((sum, i) => sum + i["Profit"], 0)),
+  ];
 
-    doc.autoTable({
-      head: [tableColumns],
-      body: tableRows,
-      startY: 35,
-      styles: {
-        fontSize: 9,
-        halign: "center",
-        valign: "middle",
-      },
-      columnStyles: {
-        7: { halign: "right" },
-        8: { halign: "right" },
-      },
-      headStyles: {
-        fillColor: [41, 128, 185],
-        textColor: 255,
-        fontStyle: "bold",
-      },
-      footStyles: {
-        fillColor: [52, 73, 94],
-        textColor: 255,
-        fontStyle: "bold",
-      },
-      alternateRowStyles: {
-        fillColor: [245, 245, 245],
-      },
-      didDrawPage: function (data) {
-        const pageCount = doc.internal.getNumberOfPages();
-        doc.setFontSize(8);
-        doc.text(`Page ${data.pageNumber} of ${pageCount}`, 200, 290, {
-          align: "right",
-        });
-      },
-    });
+  const finalData = [...headerRows, tableHeader, ...tableBody, totalRow];
+  const ws = XLSX.utils.aoa_to_sheet(finalData);
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, "Laporan");
+  XLSX.writeFile(wb, `Laporan_Usaha_${periode}_${bulan}_${tahun}.xlsx`);
 
-    doc.save(`Laporan_Usaha_${periode}_${bulan}_${tahun}.pdf`);
+  Swal.fire({
+    icon: "success",
+    title: "Export Excel berhasil!",
+    showConfirmButton: false,
+    timer: 1500,
+  });
+};
 
+const handleExportPDF = async () => {
+  const result = await gunakanToken(3, "Export Laporan PDF");
+  if (!result.success) {
     Swal.fire({
-      icon: "success",
-      title: "Export PDF berhasil!",
-      showConfirmButton: false,
-      timer: 1500,
+      icon: "error",
+      title: "Export Gagal",
+      text: result.error || "Token tidak mencukupi.",
     });
-  };
+    return;
+  }
+
+  const doc = new jsPDF("p", "mm", "a4");
+  const namaToko = "Toko Contoh";
+  const tanggalAwal = new Date(tahun, bulan - 1, 1);
+  const tanggalAkhir = new Date(tahun, bulan, 0);
+  const formatter = new Intl.DateTimeFormat("id-ID", {
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+  });
+  const periodeString = `${tanggalAwal.getDate()} - ${tanggalAkhir.getDate()} ${formatter.format(tanggalAkhir).split(" ")[1]} ${tahun}`;
+
+  doc.setFontSize(14);
+  doc.text("Laporan Usaha", 105, 15, null, null, "center");
+  doc.setFontSize(11);
+  doc.text(namaToko, 105, 22, null, null, "center");
+  doc.text(`Periode: ${periodeString}`, 105, 28, null, null, "center");
+
+  const startY = 35;
+  const tableColumns = [
+    "Tanggal",
+    "Transfer",
+    "Tarik Tunai",
+    "Setor Tunai",
+    "Top Up",
+    "Pengeluaran",
+    "Total",
+    "Omzet",
+    "Profit",
+  ];
+
+  const tableRows = filteredData.map((row) => [
+    formatTanggalDDMMYYYY(row.tanggal),
+    row.Transfer,
+    row.TarikTunai,
+    row.SetorTunai,
+    row.TopUp,
+    row.Pengeluaran,
+    row.Total,
+    formatRupiah(row.Omzet),
+    formatRupiah(row.Profit),
+  ]);
+
+  const totalRow = [
+    "Total",
+    ...["Transfer", "TarikTunai", "SetorTunai", "TopUp", "Pengeluaran", "Total"].map((key) =>
+      filteredData.reduce((sum, i) => sum + i[key], 0)
+    ),
+    formatRupiah(filteredData.reduce((sum, i) => sum + i["Omzet"], 0)),
+    formatRupiah(filteredData.reduce((sum, i) => sum + i["Profit"], 0)),
+  ];
+  tableRows.push(totalRow);
+
+  doc.autoTable({
+    head: [tableColumns],
+    body: tableRows,
+    startY: startY,
+    styles: {
+      fontSize: 9,
+      halign: "center",
+      valign: "middle",
+    },
+    columnStyles: {
+      7: { halign: "right" }, // Omzet
+      8: { halign: "right" }, // Profit
+    },
+    headStyles: {
+      fillColor: [41, 128, 185],
+      textColor: 255,
+      fontStyle: "bold",
+    },
+    footStyles: {
+      fillColor: [52, 73, 94],
+      textColor: 255,
+      fontStyle: "bold",
+    },
+    alternateRowStyles: {
+      fillColor: [245, 245, 245],
+    },
+    didDrawPage: function (data) {
+      const pageCount = doc.internal.getNumberOfPages();
+      doc.setFontSize(8);
+      doc.text(`Page ${data.pageNumber} of ${pageCount}`, 200, 290, {
+        align: "right",
+      });
+    },
+  });
+
+  doc.save(`Laporan_Usaha_${periode}_${bulan}_${tahun}.pdf`);
+
+  Swal.fire({
+    icon: "success",
+    title: "Export PDF berhasil!",
+    showConfirmButton: false,
+    timer: 1500,
+  });
+};
 
   useEffect(() => {
     const fetchData = async () => {
@@ -289,7 +330,6 @@ const toggleDetails = (date) => {
  return (
     <>
 <div className="mobile-header-container">
-  <div className="mobile-header-action" onclick="window.history.back()">←</div>
   <div className="mobile-header-title">Laporan Usaha</div>
   <div className="mobile-header-action"></div>
 </div>
@@ -364,10 +404,15 @@ const toggleDetails = (date) => {
                 {filteredData.length > 0 ? (
                   <>
                     {filteredData.map((row, index) => (
-                      <div key={index} className="trend-strip-item flex-column align-items-start">
-                        <div className="trend-date mb-2" onClick={() => toggleDetails(row.tanggal)}>
-                          {row.tanggal}
-                        </div>
+						<div
+						  key={index}
+						  className="trend-strip-item flex-column align-items-start"
+						  onClick={() => toggleDetails(row.tanggal)}
+						  style={{ cursor: "pointer" }}
+						>
+						  <div className="trend-date mb-2">
+							{row.tanggal}
+						  </div>
 
                         {/* Show details only if this date is expanded */}
                         {expandedDates.includes(row.tanggal) && (

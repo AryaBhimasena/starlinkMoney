@@ -32,13 +32,16 @@ const updateSaldo = async (sumberDana, transaksiData) => {
             throw new Error("❌ transaksiData tidak valid atau undefined.");
         }
 
-        // 2️⃣ Ambil saldo saat ini berdasarkan sumber dana & Uang Kas
-        const saldoSumberDana = await getSaldoBySumberDana(sumberDana);
-        const saldoUangKas = await getSaldoBySumberDana("Uang Kas");
+		// 2️⃣ Ambil saldo saat ini berdasarkan sumber dana & Uang Kas
+		const saldoSumberDana = await getSaldoBySumberDana(sumberDana);
+		const saldoUangKas = await getSaldoBySumberDana("Uang Kas");
 
-        if (!saldoSumberDana || !saldoUangKas) {
-            throw new Error(`❌ Saldo tidak ditemukan untuk sumber dana: ${sumberDana} atau Uang Kas.`);
-        }
+		if (!saldoSumberDana?.length || !saldoUangKas?.length) {
+		  throw new Error(`❌ Saldo tidak ditemukan untuk sumber dana: ${sumberDana} atau Uang Kas.`);
+		}
+
+		const namaSumberDana = saldoSumberDana[0].sumberDana; // Ambil nama sumber dana asli
+
 
         // 3️⃣ Hitung saldo baru berdasarkan transaksi
         const saldoBaru = await hitungSaldo([...saldoSumberDana, ...saldoUangKas], transaksiData);
@@ -56,15 +59,15 @@ const updateSaldo = async (sumberDana, transaksiData) => {
         await saveSaldoBySumberDana("Uang Kas", saldoBaru.saldoBaruUangKas);
 
         // 6️⃣ Update state saldo di aplikasi untuk sumber dana & Uang Kas
-        setSaldo((prevSaldo) =>
-            prevSaldo.map((item) =>
-                item.sumberDana === sumberDana
-                    ? { ...item, saldo: saldoBaru.saldoBaruSumber }
-                    : item.sumberDana === "Uang Kas"
-                    ? { ...item, saldo: saldoBaru.saldoBaruUangKas }
-                    : item
-            )
-        );
+		setSaldo((prevSaldo) =>
+		  prevSaldo.map((item) =>
+			item.sumberDana === namaSumberDana
+			  ? { ...item, saldo: saldoBaru.saldoBaruSumber }
+			  : item.sumberDana === "Uang Kas"
+			  ? { ...item, saldo: saldoBaru.saldoBaruUangKas }
+			  : item
+		  )
+		);
 
         console.log("✅ updateSaldo selesai!");
     } catch (error) {

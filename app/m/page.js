@@ -110,9 +110,9 @@ return (
           <h2>Starlink Money</h2>
           <p>Solusi digital untuk usaha mini bank Anda.</p>
           <ul className="checklist">
-            <li>✔ Transaksi otomatis</li>
-            <li>✔ Laporan real-time</li>
-            <li>✔ Semua dalam satu platform</li>
+            <li> Transaksi otomatis</li>
+            <li> Laporan real-time</li>
+            <li> Semua dalam satu platform</li>
           </ul>
         </div>
         <div className="carousel-slide">

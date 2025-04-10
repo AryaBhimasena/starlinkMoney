@@ -1,12 +1,14 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useContext } from "react";
 import { getAllData } from "../../services/indexedDBService";
 import * as XLSX from "xlsx";
 import jsPDF from "jspdf";
 import "jspdf-autotable";
 import Swal from "sweetalert2";
 import "sweetalert2/dist/sweetalert2.min.css"; // opsional untuk style
+import { gunakanToken } from "../../services/tokenService"; // ✅ Tambahkan ini
+import { TokenContext } from "../../context/tokenContext"; // atau path sesuai struktur kamu
 
 const formatTanggalDDMMYYYY = (tanggalStr) => {
   const [year, month, day] = tanggalStr.split("-");
@@ -15,6 +17,7 @@ const formatTanggalDDMMYYYY = (tanggalStr) => {
 
 
 const PageLaporan = () => {
+  const { setTotalToken } = useContext(TokenContext);
   const [transaksiList, setTransaksiList] = useState([]);
   const [filteredData, setFilteredData] = useState([]);
   const [periode, setPeriode] = useState("bulanan");
@@ -37,7 +40,16 @@ const PageLaporan = () => {
 	};
 
 const handleExportExcel = async () => {
-  const dataWithoutTotal = [...filteredData];
+  const result = await gunakanToken(3, "Export Laporan Excel"); // ✅ gunakanToken (misalnya butuh 2 token)
+  if (!result.success) {
+    Swal.fire({
+      icon: "error",
+      title: "Export Gagal",
+      text: result.error || "Token tidak mencukupi.",
+    });
+    return;
+  }
+
   const namaToko = "Toko Contoh";
   const tanggalAwal = new Date(tahun, bulan - 1, 1);
   const tanggalAkhir = new Date(tahun, bulan, 0);
@@ -67,8 +79,8 @@ const handleExportExcel = async () => {
     "Profit",
   ];
 
-  const tableBody = dataWithoutTotal.map((row) => [
-    formatTanggalDDMMYYYY(row.tanggal),
+  const tableBody = filteredData.map((row) => [
+    row.tanggal,
     row.Transfer,
     row.TarikTunai,
     row.SetorTunai,
@@ -102,7 +114,17 @@ const handleExportExcel = async () => {
   });
 };
 
-const handleExportPDF = () => {
+const handleExportPDF = async () => {
+  const result = await gunakanToken(3, "Export Laporan PDF");
+  if (!result.success) {
+    Swal.fire({
+      icon: "error",
+      title: "Export Gagal",
+      text: result.error || "Token tidak mencukupi.",
+    });
+    return;
+  }
+
   const doc = new jsPDF("p", "mm", "a4");
   const namaToko = "Toko Contoh";
   const tanggalAwal = new Date(tahun, bulan - 1, 1);
@@ -198,8 +220,8 @@ const handleExportPDF = () => {
     showConfirmButton: false,
     timer: 1500,
   });
-};  
-  
+};
+ 
   useEffect(() => {
     const fetchData = async () => {
       const data = await getAllData("transaksi");

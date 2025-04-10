@@ -1,19 +1,42 @@
 "use client";
 
 import React, { useState, useEffect, useContext } from "react";
-import { db, auth } from "../../lib/firebaseConfig";
-import { collection, query, where, getDocs } from "firebase/firestore";
-import { getSumberDana } from "../../services/sumberDanaService";
+import { getSumberDanaData, addSingleTransaksi, getTokenFromIndexedDB, getUserData, getAllTransaksi, saveTempReff, getTempReff } from "../../services/indexedDBService";
 import { TransaksiContext } from "../../context/TransaksiContext";
-import { SaldoContext } from "../../context/SaldoContext"; // ✅ Tambahkan import ini
-import { addSingleTransaksi, getTokenFromIndexedDB } from "../../services/indexedDBService";
+import { SaldoContext } from "../../context/SaldoContext";
 import { hitungSaldo } from "../../lib/hitungSaldo";
-import { gunakanToken } from "../../services/tokenService"; // ✅ Tambahkan ini
-import { TokenContext } from "../../context/tokenContext"; // atau path sesuai struktur kamu
+import { gunakanToken } from "../../services/tokenService";
+import { TokenContext } from "../../context/tokenContext";
 
 const TambahTransaksi = ({ closeModal, refreshTransaksi, editData }) => {
   const { tambahTransaksi } = useContext(TransaksiContext);
-  const { updateSaldo } = useContext(SaldoContext); // ✅ Ambil updateSaldo dari SaldoContext
+  const { updateSaldo } = useContext(SaldoContext);
+  const { setTotalToken } = useContext(TokenContext);
+  
+  const generateNoReff = async (entitasId) => {
+  const today = new Date();
+  const ddmmyyyy = today
+    .toLocaleDateString("id-ID")
+    .split("/")
+    .map((val) => val.padStart(2, "0"))
+    .join(""); // hasil: 10042025
+
+  const allTransaksi = await getAllTransaksi();
+
+  // Filter transaksi berdasarkan entitasId dan tanggal
+  const transaksiHariIni = allTransaksi.filter((t) => {
+    const tgl = new Date(t.tanggal);
+    const samaTanggal =
+      tgl.getDate() === today.getDate() &&
+      tgl.getMonth() === today.getMonth() &&
+      tgl.getFullYear() === today.getFullYear();
+    return t.entitasId === entitasId && samaTanggal;
+  });
+
+  const noUrut = (transaksiHariIni.length + 1).toString().padStart(3, "0");
+  return `${ddmmyyyy}-${noUrut}`; // contoh: 10042025-001
+};
+
 
   const [form, setForm] = useState({
     tanggal: new Date().toISOString().split("T")[0],
@@ -36,61 +59,45 @@ const TambahTransaksi = ({ closeModal, refreshTransaksi, editData }) => {
   const [successMessage, setSuccessMessage] = useState("");
   const [showPopup, setShowPopup] = useState(false);
   const [activeTab, setActiveTab] = useState("tab1");
-  const { setTotalToken } = useContext(TokenContext);
 
   useEffect(() => {
     let isMounted = true;
 
-    const getUserEntitasId = async () => {
-      const user = auth.currentUser;
-      if (!user) {
-        console.error("❌ Pengguna belum login.");
-        return;
-      }
-
+    const initData = async () => {
       try {
-        const userRef = collection(db, "users");
-        const q = query(userRef, where("uid", "==", user.uid));
-        const querySnapshot = await getDocs(q);
-        if (querySnapshot.empty) {
-          console.error("❌ Data user tidak ditemukan.");
+        const userData = await getUserData();
+        if (!userData || !userData.entitasId) {
+          console.error("❌ entitasId tidak ditemukan di IndexedDB.");
           return;
         }
 
-        const userData = querySnapshot.docs[0].data();
-        const fetchedEntitasId = userData.entitasId;
-        console.log("✅ Entitas ID ditemukan:", fetchedEntitasId);
-
         if (isMounted) {
-          setEntitasId(fetchedEntitasId);
-          fetchSumberDana(fetchedEntitasId);
+          setEntitasId(userData.entitasId);
+          const sumberDanaList = await getSumberDanaData();
+          setSumberDana(sumberDanaList);
         }
-      } catch (error) {
-        console.error("❌ Error mengambil data pengguna:", error);
+		
+      let noReff = await getTempReff(userData.entitasId);
+      if (!noReff) {
+        noReff = await generateNoReff(userData.entitasId);
+        await saveTempReff(userData.entitasId, noReff);
+      }
+
+      setForm((prev) => ({ ...prev, noReff }));
+    
+		
+      } catch (err) {
+        console.error("❌ Gagal inisialisasi data dari IndexedDB:", err);
+        setError("Gagal memuat data pengguna atau sumber dana.");
       }
     };
 
-    getUserEntitasId();
+    initData();
 
     return () => {
       isMounted = false;
     };
   }, []);
-
-  const fetchSumberDana = async (entitasId) => {
-    if (!entitasId) return;
-
-    try {
-      const sumberDanaList = await getSumberDana(entitasId);
-      if (sumberDanaList.length === 0) {
-        console.warn("⚠️ Tidak ada sumber dana ditemukan.");
-      }
-      setSumberDana(sumberDanaList);
-    } catch (error) {
-      console.error("❌ Error mengambil sumber dana:", error);
-      setError("Gagal mengambil sumber dana.");
-    }
-  };
 
   useEffect(() => {
     setForm((prev) => ({
@@ -101,7 +108,7 @@ const TambahTransaksi = ({ closeModal, refreshTransaksi, editData }) => {
 
   useEffect(() => {
     if (editData) {
-      setForm(editData); // Mengisi form dengan data transaksi yang diedit
+      setForm(editData);
     }
   }, [editData]);
 
@@ -109,115 +116,90 @@ const TambahTransaksi = ({ closeModal, refreshTransaksi, editData }) => {
     const { name, value } = e.target;
     setForm((prev) => ({
       ...prev,
-      [name]: name === "nominal" || name === "tarif" || name === "admin" ? Number(value) : value,
+      [name]: ["nominal", "tarif", "admin"].includes(name) ? Number(value) : value,
     }));
   };
 
-const handleSubmit = async (e) => {
-  e.preventDefault();
-  console.log("🟢 handleSubmit() dipanggil...");
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    console.log("🟢 handleSubmit() dipanggil...");
 
-  if (!entitasId) {
-    console.error("❌ Entitas ID tidak ditemukan!");
-    alert("❌ Entitas ID tidak ditemukan!");
-    return;
-  }
-
-  if (!form.nominal || !form.sumberDana) {
-    console.error("❌ Nominal dan Sumber Dana wajib diisi!");
-    setError("❌ Nominal dan Sumber Dana wajib diisi!");
-    return;
-  }
-
-  // Tentukan jenisTransaksi otomatis berdasarkan tab
-  let jenisTransaksi = "Transfer";
-  if (activeTab === "tab1") jenisTransaksi = form.jenisTransaksi || "Transfer";
-  else if (activeTab === "tab2") jenisTransaksi = "Top Up Pulsa / Listrik";
-  else if (activeTab === "tab3") jenisTransaksi = "Top Up E-Wallet";
-
-  // Siapkan data transaksi
-  const transaksiData = {
-    ...form,
-    entitasId,
-    jenisTransaksi,
-    createdAt: Date.now(),
-    profit: Number(form.tarif),
-  };
-
-  // Bersihkan field yang tidak relevan berdasarkan tab
-  if (activeTab === "tab2") {
-    delete transaksiData.penerima;
-    delete transaksiData.noRekening;
-  }
-  if (activeTab === "tab3") {
-    delete transaksiData.noRekening;
-  }
-
-  setLoading(true);
-  try {
-    // ✅ STEP 1: Validasi token cukup
-    const tokenInfo = await getTokenFromIndexedDB(entitasId);
-    const currentToken = tokenInfo?.totalToken ?? 0;
-
-    if (currentToken < 1) {
-      alert("❌ Token tidak mencukupi untuk membuat transaksi.");
-      setLoading(false);
+    if (!entitasId) {
+      alert("❌ Entitas ID tidak ditemukan!");
       return;
     }
 
-    // ✅ STEP 2: Simpan transaksi
-    console.log("📩 Menyimpan transaksi ke store transaksi...");
-    console.log("🔍 Data transaksi yang akan disimpan:", transaksiData);
-
-    const transaksiBaru = await addSingleTransaksi(transaksiData);
-
-    console.log("✅ Transaksi berhasil ditambahkan!", transaksiBaru);
-
-    if (!transaksiBaru || typeof transaksiBaru !== "object") {
-      throw new Error("❌ Data transaksi tidak valid setelah ditambahkan!");
+    if (!form.nominal || !form.sumberDana) {
+      setError("❌ Nominal dan Sumber Dana wajib diisi!");
+      return;
     }
 
-    if (!transaksiBaru.sumberDana) {
-      throw new Error("❌ sumberDana tidak ditemukan dalam transaksi!");
+    let jenisTransaksi = "Transfer";
+    if (activeTab === "tab1") jenisTransaksi = form.jenisTransaksi || "Transfer";
+    else if (activeTab === "tab2") jenisTransaksi = "Top Up Pulsa / Listrik";
+    else if (activeTab === "tab3") jenisTransaksi = "Top Up E-Wallet";
+
+    const transaksiData = {
+      ...form,
+      entitasId,
+      jenisTransaksi,
+      createdAt: Date.now(),
+      profit: Number(form.tarif),
+    };
+
+    if (activeTab === "tab2") {
+      delete transaksiData.penerima;
+      delete transaksiData.noRekening;
+    }
+    if (activeTab === "tab3") {
+      delete transaksiData.noRekening;
     }
 
-// ✅ STEP 3: Kurangi token (tidak bergantung ke transaksi lagi)
-setTimeout(async () => {
-  const tokenResult = await gunakanToken(1, "Transaksi Baru");
+    setLoading(true);
+    try {
+      const tokenInfo = await getTokenFromIndexedDB(entitasId);
+      const currentToken = tokenInfo?.totalToken ?? 0;
 
-  if (!tokenResult.success) {
-    console.warn("⚠️ Transaksi tersimpan, tapi gagal mengurangi token:", tokenResult.error);
-    alert(`⚠️ Transaksi berhasil, tapi token gagal dikurangi: ${tokenResult.error}`);
-  } else {
-    // ✅ Update context token agar UI langsung berubah
-    setTotalToken((prev) => prev - 1);
-  }
-}, 0);
+      if (currentToken < 1) {
+        alert("❌ Token tidak mencukupi untuk membuat transaksi.");
+        setLoading(false);
+        return;
+      }
 
-    console.log("💰 Memulai perhitungan saldo...");
-    await updateSaldo(transaksiBaru.sumberDana, transaksiBaru);
-    console.log("✅ Saldo berhasil diperbarui!");
+      const transaksiBaru = await addSingleTransaksi(transaksiData);
+      if (!transaksiBaru || typeof transaksiBaru !== "object") throw new Error("Data transaksi tidak valid!");
+      if (!transaksiBaru.sumberDana) throw new Error("sumberDana tidak ditemukan dalam transaksi!");
 
-    setSuccessMessage("✅ Transaksi berhasil ditambahkan!");
-    setShowPopup(true);
-    setTimeout(() => setShowPopup(false), 3000);
+      setTimeout(async () => {
+        const tokenResult = await gunakanToken(1, "Transaksi Baru");
+        if (!tokenResult.success) {
+          alert(`⚠️ Transaksi berhasil, tapi token gagal dikurangi: ${tokenResult.error}`);
+        } else {
+          setTotalToken((prev) => prev - 1);
+        }
+      }, 0);
 
-    refreshTransaksi();
-    closeModal();
-  } catch (error) {
-    console.error("❌ Gagal memproses transaksi:", error);
-    alert(`❌ Terjadi kesalahan: ${error.message || "Silakan coba lagi."}`);
-  } finally {
-    setLoading(false);
-  }
-};
+      await updateSaldo(transaksiBaru.sumberDana, transaksiBaru);
+
+      setSuccessMessage("✅ Transaksi berhasil ditambahkan!");
+      setShowPopup(true);
+      setTimeout(() => setShowPopup(false), 3000);
+
+      refreshTransaksi();
+      closeModal();
+    } catch (error) {
+      console.error("❌ Gagal memproses transaksi:", error);
+      alert(`❌ Terjadi kesalahan: ${error.message || "Silakan coba lagi."}`);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
     const link = document.createElement("link");
     link.rel = "stylesheet";
     link.href = "/bootstrap/css/custom.css";
     document.head.appendChild(link);
-
     return () => {
       document.head.removeChild(link);
     };
@@ -331,9 +313,8 @@ return (
                   <div className="col-md-4">
                     <label className="form-label">Jenis Transaksi</label>
                     <select className="form-select" name="jenisTransaksi" value={form.jenisTransaksi} onChange={handleChange} required>
-                      <option value="Transfer">Transfer</option>
-                      <option value="Tarik Tunai">Tarik Tunai</option>
-                      <option value="Setor Tunai">Setor Tunai</option>
+                      <option value="Pulsa Telepon">Pulsa Telepon</option>
+                      <option value="Pulsa Listrik">Pulsa Listrik</option>
                     </select>
                   </div>
 			  </div>
@@ -342,7 +323,7 @@ return (
                 {/* Kolom 2 */}
                   <div className="col-md-4">
                     <label className="form-label">No HP/ID Pelanggan/No Meter</label>
-                    <input type="text" className="form-control" name="NoHP_IDPel" value={form.NoHP_IDPel} readOnly />
+                    <input type="text" className="form-control" name="NoHP_IDPel" value={form.NoHP_IDPel} onChange={handleChange} required />
                   </div>
                   <div className="col-md-4">
                     <label className="form-label">Nominal</label>
@@ -350,7 +331,7 @@ return (
                   </div>
                   <div className="col-md-4">
                     <label className="form-label">No Token</label>
-                    <input type="text" className="form-control" name="noToken" value={form.noToken} onChange={handleChange} required />
+                    <input type="text" className="form-control" name="noToken" value={form.noToken} onChange={handleChange} />
                   </div>
               </div>
 			  
@@ -363,10 +344,6 @@ return (
                   <div className="col-md-4">
                     <label className="form-label">Harga Modal</label>
                     <input type="number" className="form-control" name="hargaModal" value={form.hargaModal} onChange={handleChange} required />
-                  </div>
-                  <div className="col-md-4">
-                    <label className="form-label">Jasa</label>
-                    <input type="number" className="form-control" name="tarif" value={form.tarif} onChange={handleChange} required />
                   </div>
               </div>
 			</div>
@@ -386,11 +363,7 @@ return (
                   </div>
                   <div className="col-md-4">
                     <label className="form-label">Jenis Transaksi</label>
-                    <select className="form-select" name="jenisTransaksi" value={form.jenisTransaksi} onChange={handleChange} required>
-                      <option value="Transfer">Transfer</option>
-                      <option value="Tarik Tunai">Tarik Tunai</option>
-                      <option value="Setor Tunai">Setor Tunai</option>
-                    </select>
+                    <input type="text" className="form-control" name="jenisTransaksi" value="Top Up E-Wallet" readOnly />
                   </div>
 			  </div>
 			

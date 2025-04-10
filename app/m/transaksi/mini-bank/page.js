@@ -1,54 +1,95 @@
 "use client";
 
 import { useEffect, useState, useContext } from "react";
-import { db, auth } from "../../../../lib/firebaseConfig";
-import { collection, query, where, getDocs } from "firebase/firestore";
-import { getSumberDana } from "../../../../services/sumberDanaService";
-import { addSingleTransaksi, getTokenFromIndexedDB } from "../../../../services/indexedDBService";
+import {
+  getUserData,
+  getSaldoData,
+  addSingleTransaksi,
+  getAllTransaksi,
+  getTokenFromIndexedDB,
+  saveTempReff,
+  getTempReff,
+} from "../../../../services/indexedDBService";
 import { gunakanToken } from "../../../../services/tokenService";
 import { TransaksiContext } from "../../../../context/TransaksiContext";
 import { SaldoContext } from "../../../../context/SaldoContext";
 import { TokenContext } from "../../../../context/tokenContext";
+import Swal from "sweetalert2";
 
 export default function MiniBankPage() {
   const { updateSaldo } = useContext(SaldoContext);
   const { refreshTransaksi } = useContext(TransaksiContext);
   const { setTotalToken } = useContext(TokenContext);
 
-  const [form, setForm] = useState({
-    tanggal: new Date().toISOString().split("T")[0],
-    noReff: "AUTO-GENERATED",
-    jenisTransaksi: "Transfer",
-    pelanggan: "Umum",
-    penerima: "",
-    noRekening: "",
-    nominal: 0,
-    tarif: 0,
-    admin: 0,
-    sumberDana: "", // ✅ Tambahan untuk dropdown
-  });
+  const initialForm = {
+  tanggal: new Date().toISOString().split("T")[0],
+  noReff: "AUTO-GENERATED",
+  jenisTransaksi: "Transfer",
+  pelanggan: "Umum",
+  penerima: "",
+  noRekening: "",
+  nominal: 0,
+  tarif: 0,
+  admin: 0,
+  sumberDana: "",
+  };
+
+  const [form, setForm] = useState(initialForm);
+
 
   const [entitasId, setEntitasId] = useState("");
-  const [loading, setLoading] = useState(false);
   const [sumberDanaList, setSumberDanaList] = useState([]);
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
 
+  const generateNoReff = async (entitasId) => {
+    const today = new Date();
+    const ddmmyyyy = today
+      .toLocaleDateString("id-ID")
+      .split("/")
+      .map((val) => val.padStart(2, "0"))
+      .join(""); // contoh: 10042025
+
+    const allTransaksi = await getAllTransaksi();
+    const transaksiHariIni = allTransaksi.filter((t) => {
+      const tgl = new Date(t.tanggal);
+      return (
+        t.entitasId === entitasId &&
+        tgl.getDate() === today.getDate() &&
+        tgl.getMonth() === today.getMonth() &&
+        tgl.getFullYear() === today.getFullYear()
+      );
+    });
+
+    const noUrut = (transaksiHariIni.length + 1).toString().padStart(3, "0");
+    return `${ddmmyyyy}-${noUrut}`;
+  };
+
   useEffect(() => {
-    const fetchEntitas = async () => {
-      const user = auth.currentUser;
-      if (!user) return;
-      const q = query(collection(db, "users"), where("uid", "==", user.uid));
-      const snapshot = await getDocs(q);
-      const userData = snapshot.docs[0]?.data();
-      if (userData?.entitasId) {
+    const fetchData = async () => {
+      try {
+        const userData = await getUserData();
+        if (!userData?.entitasId) return setError("Entitas tidak ditemukan.");
+
         setEntitasId(userData.entitasId);
-        const sumberDana = await getSumberDana(userData.entitasId);
-        setSumberDanaList(sumberDana);
+        const saldoList = await getSaldoData();
+        setSumberDanaList(saldoList);
+
+        let noReff = await getTempReff(userData.entitasId);
+        if (!noReff) {
+          noReff = await generateNoReff(userData.entitasId);
+          await saveTempReff(userData.entitasId, noReff);
+        }
+
+        setForm((prev) => ({ ...prev, noReff }));
+      } catch (err) {
+        console.error("Gagal inisialisasi data:", err);
+        setError("Gagal mengambil data pengguna atau sumber dana.");
       }
     };
 
-    fetchEntitas();
+    fetchData();
   }, []);
 
   const handleChange = (e) => {
@@ -61,39 +102,70 @@ export default function MiniBankPage() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setError("");
+    setSuccess("");
+
     if (!entitasId) return alert("Entitas ID belum ditemukan.");
     if (!form.nominal || !form.sumberDana) return alert("Nominal dan Sumber Dana wajib diisi.");
 
     setLoading(true);
-    const transaksiData = {
-      ...form,
-      entitasId,
-      createdAt: Date.now(),
-      profit: Number(form.tarif),
-    };
 
     try {
       const tokenInfo = await getTokenFromIndexedDB(entitasId);
-      if ((tokenInfo?.totalToken ?? 0) < 1) {
-        setLoading(false);
-        return alert("Token tidak mencukupi.");
-      }
+      const currentToken = tokenInfo?.totalToken ?? 0;
+
+      if (currentToken < 1) throw new Error("❌ Token tidak mencukupi untuk membuat transaksi.");
+
+		console.log("DEBUG: Semua sumber dana:", sumberDanaList);
+		console.log("DEBUG: Sumber dana yang dipilih:", form.sumberDana);
+
+		const sumberDanaData = sumberDanaList.find(
+		  (item) => item.id.toLowerCase().trim() === form.sumberDana.toLowerCase().trim()
+		);
+
+		if (!sumberDanaData) {
+		  const tersedia = sumberDanaList.map((d) => d.sumberDana).join(", ");
+		  throw new Error(`❌ Sumber Dana '${form.sumberDana}' tidak ditemukan. Pilihan yang tersedia: ${tersedia}`);
+		}
+
+
+      const noReffBaru = await generateNoReff(entitasId);
+
+      const transaksiData = {
+        ...form,
+        noReff: noReffBaru,
+        entitasId,
+        createdAt: Date.now(),
+        profit: Number(form.tarif),
+        namaSumberDana: sumberDanaData.sumberDana,
+      };
 
       const transaksiBaru = await addSingleTransaksi(transaksiData);
-      if (!transaksiBaru || !transaksiBaru.sumberDana) throw new Error("Data transaksi tidak valid.");
+      if (!transaksiBaru || typeof transaksiBaru !== "object") throw new Error("Data transaksi tidak valid.");
 
-      setTimeout(async () => {
-        const result = await gunakanToken(1, "Transaksi Baru");
-        if (result.success) setTotalToken((prev) => prev - 1);
-      }, 0);
+      const result = await gunakanToken(1, "Transaksi Baru");
+      if (!result.success) throw new Error("Gagal memotong token.");
 
+      setTotalToken((prev) => prev - 1);
       await updateSaldo(transaksiBaru.sumberDana, transaksiBaru);
-      refreshTransaksi();
-      setSuccess("Transaksi berhasil.");
-      setForm((prev) => ({ ...prev, penerima: "", noRekening: "", nominal: 0, tarif: 0, admin: 0 }));
+
+      Swal.fire({
+	  icon: "success",
+	  title: "Transaksi Berhasil",
+	  text: "Data transaksi berhasil ditambahkan.",
+		});
+
+
+      const nextNoReff = await generateNoReff(entitasId);
+      await saveTempReff(entitasId, nextNoReff);
+      setForm({
+	  ...initialForm,
+	  noReff: nextNoReff,
+	  });
+
     } catch (err) {
-      console.error(err);
-      setError("Gagal memproses transaksi.");
+      console.error("Gagal memproses transaksi:", err);
+      setError(err.message || "❌ Gagal memproses transaksi.");
     } finally {
       setLoading(false);
     }
@@ -115,12 +187,16 @@ export default function MiniBankPage() {
               type: "select",
               name: "jenisTransaksi",
               options: ["Transfer", "Tarik Tunai", "Setor Tunai"],
+              className: "transaksi-select-group",
             },
             {
               label: "Sumber Dana",
               type: "select",
               name: "sumberDana",
-              options: sumberDanaList.map((item) => item.nama),
+              options: sumberDanaList.map((item) => ({
+                label: `${item.sumberDana} - Rp${item.saldo.toLocaleString("id-ID")}`,
+                value: item.id,
+              })),
             },
             { label: "Pelanggan", type: "text", name: "pelanggan", readOnly: true },
             { label: "Penerima", type: "text", name: "penerima" },
@@ -133,17 +209,27 @@ export default function MiniBankPage() {
               <span className="mobile-form-label">{field.label}</span>
               {field.type === "select" ? (
                 <select
-                  className="mobile-form-input"
+                  className={`mobile-form-input ${field.className || ""}`}
                   name={field.name}
                   value={form[field.name]}
                   onChange={handleChange}
                 >
                   <option value="">-- Pilih --</option>
-                  {field.options.map((opt) => (
-                    <option value={opt} key={opt}>
-                      {opt}
-                    </option>
-                  ))}
+                  {field.options.map((opt, idx) => {
+                    if (typeof opt === "string") {
+                      return (
+                        <option value={opt} key={opt}>
+                          {opt}
+                        </option>
+                      );
+                    } else {
+                      return (
+                        <option value={opt.value} key={opt.value || idx}>
+                          {opt.label}
+                        </option>
+                      );
+                    }
+                  })}
                 </select>
               ) : (
                 <input
