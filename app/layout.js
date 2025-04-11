@@ -24,11 +24,19 @@ export default function RootLayout({ children }) {
   useEffect(() => {
     if (typeof window !== "undefined") {
       const isMobile = window.innerWidth <= 768;
+      const isOnMainDomain = window.location.hostname === "starlinkmoney.vercel.app";
+      const isAlreadyOnMobile = pathname.startsWith("/m");
+
+      // 🚀 Redirect to m-subdomain for mobile users
+      if (isMobile && isOnMainDomain && !isAlreadyOnMobile) {
+        window.location.href = `https://m-starlinkmoney.vercel.app/m`;
+      }
+
       if (isMobile) {
         setSidebarOpen(false);
       }
     }
-  }, []);
+  }, [pathname]);
 
   // 👉 Skip desktop layout if it's a mobile route
   if (isMobileRoute) {
@@ -56,9 +64,7 @@ export default function RootLayout({ children }) {
                   <SaldoProvider>
                     {!isAuthPage && (
                       <Navbar
-                        className={
-                          sidebarOpen ? "sidebar-open" : "sidebar-closed"
-                        }
+                        className={sidebarOpen ? "sidebar-open" : "sidebar-closed"}
                       />
                     )}
                     <div

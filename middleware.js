@@ -6,29 +6,16 @@ export function middleware(req) {
   const role = req.cookies.get("role");
 
   const userAgent = req.headers.get("user-agent") || "";
-  const isMobile = /mobile|android|iphone|ipad|ipod/i.test(userAgent);
-  const hostname = req.headers.get("host");
+  const isMobile = /Android|iPhone|iPad|Mobile/i.test(userAgent);
 
-  // ✅ Redirect ke m-domain jika pakai device mobile
-  if (
-    hostname === "starlinkmoney.vercel.app" &&
-    isMobile &&
-    !url.pathname.startsWith("/m") &&
-    !url.pathname.startsWith("/api")
-  ) {
-    const redirectUrl = new URL(req.url);
-    redirectUrl.hostname = "m-starlinkmoney.vercel.app";
-    return NextResponse.redirect(redirectUrl);
-  }
+  const isMainDomain = req.nextUrl.hostname === "starlinkmoney.vercel.app";
+  const isAlreadyMobileRoute = url.pathname.startsWith("/m");
+  const isOnMobileSubdomain = req.nextUrl.hostname === "m-starlinkmoney.vercel.app";
 
-  // ✅ Rewrite semua request di m-subdomain ke /m/*
-  if (
-    hostname === "m-starlinkmoney.vercel.app" &&
-    !url.pathname.startsWith("/m") &&
-    !url.pathname.startsWith("/api")
-  ) {
+  // ✅ Redirect ke /m jika mobile di domain utama dan belum di /m
+  if (isMobile && isMainDomain && !isAlreadyMobileRoute) {
     url.pathname = `/m${url.pathname}`;
-    return NextResponse.rewrite(url);
+    return NextResponse.redirect(url);
   }
 
   // ✅ Auth check
@@ -48,7 +35,7 @@ export function middleware(req) {
   return NextResponse.next();
 }
 
-// ✅ Matcher: jangan ganggu API, _next, asset
+// ✅ Matcher: jangan ganggu API, _next, assets, dsb
 export const config = {
   matcher: ["/((?!_next|api|login|public|bootstrap|favicon.ico).*)"],
 };

@@ -29,6 +29,18 @@ export default function LoginPage() {
     setCurrentSlide((prev) => (prev + 1) % 3); // 3 slides
   };
 
+useEffect(() => {
+    const isMobile = window.innerWidth <= 768;
+    const isMainDomain = window.location.hostname === 'starlinkmoney.vercel.app';
+    const isAlreadyOnMobile = window.location.hostname === 'm-starlinkmoney.vercel.app';
+
+    if (isMobile && isMainDomain && !isAlreadyOnMobile) {
+      window.location.replace('https://m-starlinkmoney.vercel.app/m');
+    }
+  }, []);
+
+  return null; // 👈 ini penting, jangan render apapun
+  
   useEffect(() => {
     const cssPath = "/bootstrap/css/custom.css";
     if (!document.querySelector(`link[href="${cssPath}"]`)) {
@@ -40,7 +52,6 @@ export default function LoginPage() {
     }
   }, []);
 
-  // 👉 Carousel Auto Scroll
   useEffect(() => {
     if (paused) return;
     const interval = setInterval(() => {
@@ -103,92 +114,91 @@ export default function LoginPage() {
         onMouseLeave={() => setPaused(false)}
       >
         <div className="carousel-slides" style={{ transform: `translateX(-${currentSlide * 100}%)` }}>
-		  {/* === Slide 1: Deskripsi Aplikasi === */}
-		  <div className="carousel-slide">
-			<h1>Starlink Money - Solusi Cerdas untuk Mini Bank</h1>
-			<p>
-			  Kelola transaksi usaha jasa mini bank Anda dengan lebih mudah, cepat, dan akurat.
-			  <br />Starlink Money menggantikan pencatatan manual dengan sistem digital yang mendokumentasikan
-			  <br /><strong>seluruh transaksi perbankan dalam satu platform</strong>, memastikan keuangan lebih terorganisir dan transparan.
-			</p>
-			<div className="feature-list">
-			  <p><span className="checkmark">✔</span> Pencatatan transaksi otomatis & akurat</p>
-			  <p><span className="checkmark">✔</span> Semua transaksi perbankan terdokumentasi dalam satu platform</p>
-			  <p><span className="checkmark">✔</span> Manajemen keuangan modern tanpa buku catatan</p>
-			  <p><span className="checkmark">✔</span> Laporan bisnis yang dapat diakses kapan saja & di mana saja</p>
-			</div>
-		  </div>
+          {/* === Slide 1: Deskripsi Aplikasi === */}
+          <div className="carousel-slide">
+            <h1>Starlink Money - Solusi Cerdas untuk Mini Bank</h1>
+            <p>
+              Kelola transaksi usaha jasa mini bank Anda dengan lebih mudah, cepat, dan akurat.
+              <br />Starlink Money menggantikan pencatatan manual dengan sistem digital yang mendokumentasikan
+              <br /><strong>seluruh transaksi perbankan dalam satu platform</strong>, memastikan keuangan lebih terorganisir dan transparan.
+            </p>
+            <div className="feature-list">
+              <p><span className="checkmark">✔</span> Pencatatan transaksi otomatis & akurat</p>
+              <p><span className="checkmark">✔</span> Semua transaksi perbankan terdokumentasi dalam satu platform</p>
+              <p><span className="checkmark">✔</span> Manajemen keuangan modern tanpa buku catatan</p>
+              <p><span className="checkmark">✔</span> Laporan bisnis yang dapat diakses kapan saja & di mana saja</p>
+            </div>
+          </div>
 
-			{/* === Slide 2: Paket Token === */}
-			<div className="carousel-slide">
-			  <h2 className="slide-title">Pilih Paket Token Sesuai Kebutuhan</h2>
-			  <div className="pricing-cards">
-				{/* Starter Pack */}
-				<div className="pricing-card">
-				  <h4>Starter Pack</h4>
-				  <p className="price">Rp 20.000</p>
-				  <ul>
-					<li>50 Token</li>
-					<li>50 Transaksi</li>
-					<li>Cocok untuk pemula</li>
-				  </ul>
-				  <p className="card-footer">Mulai dengan fitur dasar dan coba gratis</p>
-				</div>
+          {/* === Slide 2: Paket Token === */}
+          <div className="carousel-slide">
+            <h2 className="slide-title">Pilih Paket Token Sesuai Kebutuhan</h2>
+            <div className="pricing-cards">
+              {/* Starter Pack */}
+              <div className="pricing-card">
+                <h4>Starter Pack</h4>
+                <p className="price">Rp 20.000</p>
+                <ul>
+                  <li>50 Token</li>
+                  <li>50 Transaksi</li>
+                  <li>Cocok untuk pemula</li>
+                </ul>
+                <p className="card-footer">Mulai dengan fitur dasar dan coba gratis</p>
+              </div>
 
-			{/* Medium Pack */}
-			<div className="pricing-card best-deal">
-			  <h4>⭐ Medium Pack ⭐</h4>
-			  <p className="price">Rp 67.000</p>
-			  <ul>
-				<li>400 Token + Bonus 75 Token</li>
-				<li>Total: 475 Transaksi</li>
-				<li>Biaya per transaksi: Rp 141</li>
-				<li>Ideal untuk usaha menengah</li>
-			  </ul>
-			  <p className="card-footer highlight">Paling populer! Hemat & fleksibel</p>
-			</div>
+              {/* Medium Pack */}
+              <div className="pricing-card best-deal">
+                <h4>⭐ Medium Pack ⭐</h4>
+                <p className="price">Rp 67.000</p>
+                <ul>
+                  <li>400 Token + Bonus 75 Token</li>
+                  <li>Total: 475 Transaksi</li>
+                  <li>Biaya per transaksi: Rp 141</li>
+                  <li>Ideal untuk usaha menengah</li>
+                </ul>
+                <p className="card-footer highlight">Paling populer! Hemat & fleksibel</p>
+              </div>
 
-			{/* Enterprise Pack */}
-			<div className="pricing-card">
-			  <h4>Enterprise Pack</h4>
-			  <p className="price">Rp 139.000</p>
-			  <ul>
-				<li>1000 Token + Bonus 500 Token</li>
-				<li>Total: 1.500 Transaksi</li>
-				<li>Biaya per transaksi: Rp 92</li>
-				<li>Dirancang untuk skala besar</li>
-			  </ul>
-			  <p className="card-footer">Paket paling hemat untuk transaksi volume tinggi</p>
-			</div>
-		  </div>
+              {/* Enterprise Pack */}
+              <div className="pricing-card">
+                <h4>Enterprise Pack</h4>
+                <p className="price">Rp 139.000</p>
+                <ul>
+                  <li>1000 Token + Bonus 500 Token</li>
+                  <li>Total: 1.500 Transaksi</li>
+                  <li>Biaya per transaksi: Rp 92</li>
+                  <li>Dirancang untuk skala besar</li>
+                </ul>
+                <p className="card-footer">Paket paling hemat untuk transaksi volume tinggi</p>
+              </div>
+            </div>
 
-		  {/* Bonus & Info Tambahan */}
-		  <div className="token-info-box">
-			<p><strong>Bonus Pendaftaran:</strong> 20 Token Gratis untuk pengguna baru</p>
-			<p><strong>Skema Penggunaan Token:</strong></p>
-			<ul>
-			  <li>1 Token untuk setiap transaksi (deposit, penarikan, dll)</li>
-			  <li>3 Token untuk export data (Excel/PDF)</li>
-			</ul>
-		  </div>
-		</div>
+            {/* Bonus & Info Tambahan */}
+            <div className="token-info-box">
+              <p><strong>Bonus Pendaftaran:</strong> 20 Token Gratis untuk pengguna baru</p>
+              <p><strong>Skema Penggunaan Token:</strong></p>
+              <ul>
+                <li>1 Token untuk setiap transaksi (deposit, penarikan, dll)</li>
+                <li>3 Token untuk export data (Excel/PDF)</li>
+              </ul>
+            </div>
+          </div>
 
+          {/* === Slide 3: Real-Time Report === */}
+          <div className="carousel-slide">
+            <h1>Laporan Real-Time</h1>
+            <p>
+              Dapatkan laporan bisnis dan saldo keuangan usaha jasa Anda secara real-time,<br />
+              lengkap dengan histori transaksi & laporan keuntungan berbasis tarif.
+            </p>
+          </div>
+        </div>
 
-		  {/* === Slide 3: Real-Time Report === */}
-		  <div className="carousel-slide">
-			<h1>Laporan Real-Time</h1>
-			<p>
-			  Dapatkan laporan bisnis dan saldo keuangan usaha jasa Anda secara real-time,<br />
-			  lengkap dengan histori transaksi & laporan keuntungan berbasis tarif.
-			</p>
-		  </div>
-		</div>
-
-		{/* Tombol next slide */}
-		<button className="btn-next-slide" onClick={nextSlide}>
-		  <span className="chevron">&gt;</span>
-		</button>
-		</div>
+        {/* Tombol next slide */}
+        <button className="btn-next-slide" onClick={nextSlide}>
+          <span className="chevron">&gt;</span>
+        </button>
+      </div>
 
       {/* Garis Vertikal Pemisah */}
       <div className="vertical-line"></div>
