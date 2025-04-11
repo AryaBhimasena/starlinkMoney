@@ -2,26 +2,31 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { signInWithEmailAndPassword } from "firebase/auth";
-import { auth } from "../lib/firebaseConfig";
+import { createUserWithEmailAndPassword } from "firebase/auth";
+import { auth } from "../../lib/firebaseConfig";
 import Cookies from "js-cookie";
-import {
-  clearIndexedDB,
-  saveUserData,
-  syncUserData,
-  rekonsiliasiData,
-  getUserData,
-  fetchAndSaveTokenData,
-} from "../services/indexedDBService";
-import Image from "next/image";
+import { saveUserData } from "../../services/indexedDBService";
 
-export default function LoginPage() {
+export default function RegisterPage() {
   const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [konfirmasiPassword, setKonfirmasiPassword] = useState("");
   const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
 
-  // 👉 Carousel State
+  useEffect(() => {
+    const cssPath = "/bootstrap/css/custom.css";
+    if (!document.querySelector(`link[href="${cssPath}"]`)) {
+      const link = document.createElement("link");
+      link.rel = "stylesheet";
+      link.href = cssPath;
+      document.head.appendChild(link);
+      console.log("✅ Custom CSS berhasil dimuat:", cssPath);
+    }
+  }, []);
+
+// 👉 Carousel State
   const [currentSlide, setCurrentSlide] = useState(0);
   const [paused, setPaused] = useState(false);
 
@@ -49,54 +54,39 @@ export default function LoginPage() {
     return () => clearInterval(interval);
   }, [paused, currentSlide]);
 
-  const handleLogin = async (e) => {
+
+  const handleRegister = async (e) => {
     e.preventDefault();
     setError("");
 
+    if (password !== konfirmasiPassword) {
+      setError("Konfirmasi password tidak cocok.");
+      return;
+    }
+
     try {
-      Cookies.remove("token");
-      await clearIndexedDB();
-      console.log("IndexedDB cleared successfully");
-
-      const userCredential = await signInWithEmailAndPassword(auth, email, password);
-      if (!userCredential?.user) {
-        throw new Error("User credential is undefined");
-      }
-
+      setLoading(true);
+      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
       const token = await userCredential.user.getIdToken(true);
       Cookies.set("token", token, { expires: 1 });
-      console.log("User authenticated, token set");
 
       await saveUserData(userCredential.user.uid);
-      console.log("✅ Data pengguna berhasil disimpan di IndexedDB");
-
-      await syncUserData();
-      console.log("✅ Sinkronisasi data pengguna selesai!");
-
-      const userData = await getUserData();
-      const entitasId = userData?.entitasId;
-      if (!entitasId) throw new Error("entitasId tidak ditemukan");
-
-      await fetchAndSaveTokenData(entitasId);
-      await rekonsiliasiData();
-      console.log("✅ Rekonsiliasi saldo selesai!");
-
       router.push("/dashboard");
     } catch (err) {
-      console.error("Error Login:", err);
-      if (err.code === "auth/invalid-credential" || err.code === "auth/wrong-password") {
-        setError("Email atau password salah.");
-      } else if (err.code === "auth/user-not-found") {
-        setError("Akun tidak ditemukan.");
+      console.error("❌ Error saat registrasi:", err);
+      if (err.code === "auth/email-already-in-use") {
+        setError("Email sudah digunakan.");
       } else {
-        setError("Terjadi kesalahan. Coba lagi nanti.");
+        setError("Terjadi kesalahan saat registrasi.");
       }
+    } finally {
+      setLoading(false);
     }
   };
 
   return (
     <div className="home-container">
-      {/* Bagian Kiri: Carousel Display */}
+{/* Bagian Kiri: Carousel Display */}
       <div
         className="home-description carousel-display"
         onMouseEnter={() => setPaused(true)}
@@ -193,13 +183,13 @@ export default function LoginPage() {
       {/* Garis Vertikal Pemisah */}
       <div className="vertical-line"></div>
 
-      {/* Bagian Kanan: Form Login */}
+      {/* Bagian Kanan: Form Register */}
       <div className="login-section">
-        <h3 className="login-title">Login</h3>
+        <h3 className="login-title">Registrasi</h3>
 
         {error && <div className="alert alert-danger alert-login">{error}</div>}
 
-        <form onSubmit={handleLogin}>
+        <form onSubmit={handleRegister}>
           <div className="form-group">
             <label className="form-label">Email</label>
             <input
@@ -225,13 +215,25 @@ export default function LoginPage() {
             />
           </div>
 
-          <button type="submit" className="btn btn-login">
-            Login
+          <div className="form-group">
+            <label className="form-label">Konfirmasi Password</label>
+            <input
+              type="password"
+              className="form-control"
+              value={konfirmasiPassword}
+              onChange={(e) => setKonfirmasiPassword(e.target.value)}
+              required
+              placeholder="Ulangi password"
+            />
+          </div>
+
+          <button type="submit" className="btn btn-login" disabled={loading}>
+            {loading ? "Mendaftarkan..." : "Daftar"}
           </button>
         </form>
 
         <p className="register-info">
-          Belum punya akun? <a href="/register">Daftar di sini</a>.
+          Sudah punya akun? <a href="/">Login di sini</a>.
         </p>
       </div>
     </div>

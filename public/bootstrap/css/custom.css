@@ -1373,3 +1373,14 @@ tr:hover {
   object-fit: cover;
   width: 100%;
 }
+
+.register-form-wrapper {
+  max-width: 400px;
+  margin: 0 auto;
+  padding: 20px;
+}
+.home-description.kosong {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}

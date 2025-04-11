@@ -37,12 +37,12 @@ const TambahTransaksi = ({ closeModal, refreshTransaksi, editData }) => {
   return `${ddmmyyyy}-${noUrut}`; // contoh: 10042025-001
 };
 
-
   const [form, setForm] = useState({
     tanggal: new Date().toISOString().split("T")[0],
     noReff: "ddmmyy-0001",
     jenisTransaksi: "Transfer",
     pelanggan: "Umum",
+	NoHP_IDPel: "",
     penerima: "",
     noRekening: "",
     nominal: 0,
@@ -85,7 +85,6 @@ const TambahTransaksi = ({ closeModal, refreshTransaksi, editData }) => {
 
       setForm((prev) => ({ ...prev, noReff }));
     
-		
       } catch (err) {
         console.error("❌ Gagal inisialisasi data dari IndexedDB:", err);
         setError("Gagal memuat data pengguna atau sumber dana.");
@@ -99,12 +98,25 @@ const TambahTransaksi = ({ closeModal, refreshTransaksi, editData }) => {
     };
   }, []);
 
-  useEffect(() => {
-    setForm((prev) => ({
-      ...prev,
-      totalBayar: Number(prev.nominal) + Number(prev.tarif) + Number(prev.admin),
-    }));
-  }, [form.nominal, form.tarif, form.admin]);
+useEffect(() => {
+  const nominal = Number(form.nominal) || 0;
+  const tarif = Number(form.tarif) || 0;
+  const hargaJual = Number(form.hargaJual) || 0;
+  const hargaModal = Number(form.hargaModal) || 0;
+
+  let totalBayar = nominal;
+
+  if (tarif > 0) {
+    totalBayar += tarif;
+  } else if (hargaJual && hargaModal) {
+    totalBayar += hargaJual - hargaModal;
+  }
+
+  setForm((prev) => ({
+    ...prev,
+    totalBayar,
+  }));
+}, [form.nominal, form.tarif, form.hargaJual, form.hargaModal]);
 
   useEffect(() => {
     if (editData) {
@@ -120,80 +132,123 @@ const TambahTransaksi = ({ closeModal, refreshTransaksi, editData }) => {
     }));
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    console.log("🟢 handleSubmit() dipanggil...");
+const handleSubmit = async (e) => {
+  e.preventDefault();
+  console.log("🟢 handleSubmit() dipanggil...");
 
-    if (!entitasId) {
-      alert("❌ Entitas ID tidak ditemukan!");
-      return;
-    }
+  if (!entitasId) {
+    alert("❌ Entitas ID tidak ditemukan!");
+    return;
+  }
 
-    if (!form.nominal || !form.sumberDana) {
-      setError("❌ Nominal dan Sumber Dana wajib diisi!");
-      return;
-    }
+  if (!form.nominal || !form.sumberDana) {
+    setError("❌ Nominal dan Sumber Dana wajib diisi!");
+    return;
+  }
 
-    let jenisTransaksi = "Transfer";
-    if (activeTab === "tab1") jenisTransaksi = form.jenisTransaksi || "Transfer";
-    else if (activeTab === "tab2") jenisTransaksi = "Top Up Pulsa / Listrik";
-    else if (activeTab === "tab3") jenisTransaksi = "Top Up E-Wallet";
+  // Tentukan jenis transaksi berdasarkan tab
+  let jenisTransaksi = "Transfer";
+  if (activeTab === "tab1") jenisTransaksi = form.jenisTransaksi || "Transfer";
+  else if (activeTab === "tab2") jenisTransaksi = "Top Up Pulsa / Listrik";
+  else if (activeTab === "tab3") jenisTransaksi = "Top Up E-Wallet";
 
-    const transaksiData = {
-      ...form,
-      entitasId,
-      jenisTransaksi,
-      createdAt: Date.now(),
-      profit: Number(form.tarif),
-    };
+  // Generate tanggal dan ID
+  const createdAt = Date.now();
+  const tanggal = new Date(createdAt).toISOString().split("T")[0];
+  const id = `${createdAt}-${Math.random().toString(36).substr(2, 8)}`;
 
-    if (activeTab === "tab2") {
-      delete transaksiData.penerima;
-      delete transaksiData.noRekening;
-    }
-    if (activeTab === "tab3") {
-      delete transaksiData.noRekening;
-    }
+  // Hitung profit dan totalBayar
+  let profit = 0;
+  const tarif = Number(form.tarif) || 0;
+  const hargaJual = Number(form.hargaJual) || 0;
+  const hargaModal = Number(form.hargaModal) || 0;
+  let totalBayar = Number(form.nominal) || 0;
 
-    setLoading(true);
-    try {
-      const tokenInfo = await getTokenFromIndexedDB(entitasId);
-      const currentToken = tokenInfo?.totalToken ?? 0;
+  if (tarif > 0) {
+    profit = tarif;
+    totalBayar += tarif;
+  } else if (hargaJual && hargaModal) {
+    profit = hargaJual - hargaModal;
+    totalBayar += profit;
+  }
 
-      if (currentToken < 1) {
-        alert("❌ Token tidak mencukupi untuk membuat transaksi.");
-        setLoading(false);
-        return;
-      }
+  // Buat nomor referensi
+  const now = new Date();
+  const ddmmyyyy = `${now.getDate().toString().padStart(2, "0")}${(now.getMonth() + 1)
+    .toString()
+    .padStart(2, "0")}${now.getFullYear()}`;
+  const noReff = `${ddmmyyyy}-001`; // Bisa diganti nanti jadi counter otomatis
 
-      const transaksiBaru = await addSingleTransaksi(transaksiData);
-      if (!transaksiBaru || typeof transaksiBaru !== "object") throw new Error("Data transaksi tidak valid!");
-      if (!transaksiBaru.sumberDana) throw new Error("sumberDana tidak ditemukan dalam transaksi!");
-
-      setTimeout(async () => {
-        const tokenResult = await gunakanToken(1, "Transaksi Baru");
-        if (!tokenResult.success) {
-          alert(`⚠️ Transaksi berhasil, tapi token gagal dikurangi: ${tokenResult.error}`);
-        } else {
-          setTotalToken((prev) => prev - 1);
-        }
-      }, 0);
-
-      await updateSaldo(transaksiBaru.sumberDana, transaksiBaru);
-
-      setSuccessMessage("✅ Transaksi berhasil ditambahkan!");
-      setShowPopup(true);
-      setTimeout(() => setShowPopup(false), 3000);
-
-      refreshTransaksi();
-      closeModal();
-    } catch (error) {
-      console.error("❌ Gagal memproses transaksi:", error);
-      alert(`❌ Terjadi kesalahan: ${error.message || "Silakan coba lagi."}`);
-    } finally {
-      setLoading(false);
-    }
+  // Siapkan objek transaksi final
+  const transaksiData = {
+    ...form,
+    id,
+    entitasId,
+    jenisTransaksi,
+    createdAt,
+    tanggal,
+    noReff,
+    tarif,
+    hargaJual,
+    hargaModal,
+    profit,
+    totalBayar,
+    admin: 0,
+    pelanggan: form.pelanggan || "Umum",
   };
+
+  // Bersihkan field yang tidak relevan
+  if (activeTab === "tab2") {
+    delete transaksiData.penerima;
+    delete transaksiData.noRekening;
+  }
+  if (activeTab === "tab3") {
+    delete transaksiData.noRekening;
+  }
+
+  setLoading(true);
+  try {
+    const tokenInfo = await getTokenFromIndexedDB(entitasId);
+    const currentToken = tokenInfo?.totalToken ?? 0;
+
+    if (currentToken < 1) {
+      alert("❌ Token tidak mencukupi untuk membuat transaksi.");
+      setLoading(false);
+      return;
+    }
+
+    console.log("📦 Transaksi yang akan disimpan:", transaksiData);
+
+    const transaksiBaru = await addSingleTransaksi(transaksiData);
+    if (!transaksiBaru || typeof transaksiBaru !== "object") throw new Error("Data transaksi tidak valid!");
+    if (!transaksiBaru.sumberDana) throw new Error("sumberDana tidak ditemukan dalam transaksi!");
+
+    // Kurangi token
+    setTimeout(async () => {
+      const tokenResult = await gunakanToken(1, "Transaksi Baru");
+      if (!tokenResult.success) {
+        alert(`⚠️ Transaksi berhasil, tapi token gagal dikurangi: ${tokenResult.error}`);
+      } else {
+        setTotalToken((prev) => prev - 1);
+      }
+    }, 0);
+
+    // Update saldo real-time
+    await updateSaldo(transaksiBaru.sumberDana, transaksiBaru);
+
+    setSuccessMessage("✅ Transaksi berhasil ditambahkan!");
+    setShowPopup(true);
+    setTimeout(() => setShowPopup(false), 3000);
+
+    refreshTransaksi();
+    closeModal();
+  } catch (error) {
+    console.error("❌ Gagal memproses transaksi:", error);
+    alert(`❌ Terjadi kesalahan: ${error.message || "Silakan coba lagi."}`);
+  } finally {
+    setLoading(false);
+  }
+};
 
   useEffect(() => {
     const link = document.createElement("link");
@@ -298,56 +353,109 @@ return (
 			</div>
 			)}
 			
-			{activeTab === "tab2" && (
-			<div className="tab-pane fade show active mt-4">
-              <div className="row">
-                {/* Kolom 1 */}
-                  <div className="col-md-4">
-                    <label className="form-label">Tanggal</label>
-                    <input type="date" className="form-control" name="tanggal" value={form.tanggal} onChange={handleChange} required />
-                  </div>
-                  <div className="col-md-4">
-                    <label className="form-label">No Reff</label>
-                    <input type="text" className="form-control" name="noReff" value={form.noReff} readOnly />
-                  </div>
-                  <div className="col-md-4">
-                    <label className="form-label">Jenis Transaksi</label>
-                    <select className="form-select" name="jenisTransaksi" value={form.jenisTransaksi} onChange={handleChange} required>
-                      <option value="Pulsa Telepon">Pulsa Telepon</option>
-                      <option value="Pulsa Listrik">Pulsa Listrik</option>
-                    </select>
-                  </div>
-			  </div>
-			
-              <div className="row">  
-                {/* Kolom 2 */}
-                  <div className="col-md-4">
-                    <label className="form-label">No HP/ID Pelanggan/No Meter</label>
-                    <input type="text" className="form-control" name="NoHP_IDPel" value={form.NoHP_IDPel} onChange={handleChange} required />
-                  </div>
-                  <div className="col-md-4">
-                    <label className="form-label">Nominal</label>
-                    <input type="text" className="form-control" name="nominal" value={form.nominal} onChange={handleChange} required />
-                  </div>
-                  <div className="col-md-4">
-                    <label className="form-label">No Token</label>
-                    <input type="text" className="form-control" name="noToken" value={form.noToken} onChange={handleChange} />
-                  </div>
-              </div>
-			  
-			  <div className="row">
-                {/* Kolom 3 */}
-                  <div className="col-md-4">
-                    <label className="form-label">Harga Jual</label>
-                    <input type="number" className="form-control" name="hargaJual" value={form.hargaJual} onChange={handleChange} required />
-                  </div>
-                  <div className="col-md-4">
-                    <label className="form-label">Harga Modal</label>
-                    <input type="number" className="form-control" name="hargaModal" value={form.hargaModal} onChange={handleChange} required />
-                  </div>
-              </div>
-			</div>
-			)}
+{activeTab === "tab2" && (
+  <div className="tab-pane fade show active mt-4">
+    <div className="row">
+      {/* Kolom 1 */}
+      <div className="col-md-4">
+        <label className="form-label">Tanggal</label>
+        <input
+          type="date"
+          className="form-control"
+          name="tanggal"
+          value={form.tanggal ?? ""}
+          onChange={handleChange}
+          required
+        />
+      </div>
+      <div className="col-md-4">
+        <label className="form-label">No Reff</label>
+        <input
+          type="text"
+          className="form-control"
+          name="noReff"
+          value={form.noReff ?? ""}
+          readOnly
+        />
+      </div>
+      <div className="col-md-4">
+        <label className="form-label">Jenis Transaksi</label>
+        <select
+          className="form-select"
+          name="jenisTransaksi"
+          value={form.jenisTransaksi ?? ""}
+          onChange={handleChange}
+          required
+        >
+          <option value="Pulsa Telepon">Pulsa Telepon</option>
+          <option value="Pulsa Listrik">Pulsa Listrik</option>
+        </select>
+      </div>
+    </div>
+
+    <div className="row">
+      {/* Kolom 2 */}
+      <div className="col-md-4">
+        <label className="form-label">No HP/ID Pelanggan/No Meter</label>
+        <input
+          type="text"
+          className="form-control"
+          name="NoHP_IDPel"
+          value={form.NoHP_IDPel ?? ""}
+          onChange={handleChange}
+          required
+        />
+      </div>
+      <div className="col-md-4">
+        <label className="form-label">Nominal</label>
+        <input
+          type="number"
+          className="form-control"
+          name="nominal"
+          value={form.nominal ?? ""}
+          onChange={handleChange}
+          required
+        />
+      </div>
+      <div className="col-md-4">
+        <label className="form-label">No Token</label>
+        <input
+          type="text"
+          className="form-control"
+          name="noToken"
+          value={form.noToken ?? ""}
+          onChange={handleChange}
+        />
+      </div>
+    </div>
+
+    <div className="row">
+      {/* Kolom 3 */}
+      <div className="col-md-4">
+        <label className="form-label">Harga Jual</label>
+        <input
+          type="number"
+          className="form-control"
+          name="hargaJual"
+          value={form.hargaJual ?? 0}
+          onChange={handleChange}
+          required
+        />
+      </div>
+      <div className="col-md-4">
+        <label className="form-label">Harga Modal</label>
+        <input
+          type="number"
+          className="form-control"
+          name="hargaModal"
+          value={form.hargaModal ?? 0}
+          onChange={handleChange}
+          required
+        />
+      </div>
+    </div>
+  </div>
+)}
 			
 			{activeTab === "tab3" && (
 			<div className="tab-pane fade show active mt-4">

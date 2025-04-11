@@ -348,26 +348,119 @@ form input {
   }
 }
 
+/* ======================
+   NAVBAR - MOBILE STYLE
+========================= */
+
 .navbar-mobile {
-  background-color: #f8f9fa;
-  height: 56px;
-  border-bottom: 1px solid #dee2e6;
-  position: sticky;
-  top: 0;
-  z-index: 1000;
-  width: 100%;
-  max-width: 390px;
-  margin: 0 auto;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.5rem 1rem;
+  background-color: #0077c8; /* Biru Starlink */
+  position: relative;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); /* Bayangan bawah */
+  z-index: 100;
 }
 
-.token-card-mobile {
+.mobile-navbar-title {
+  color: #fff;
+  text-align: center;
+  flex: 1;
+  font-size: 1.5rem;
+}
+
+.styled-brand {
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  font-size: 1.5rem;
+  font-weight: bold;
+  letter-spacing: 0.5px;
+}
+
+.mobile-btn-logout {
+  background: transparent;
+  border: none;
+  font-size: 0.75rem;
+  color: #fff !important; /* Merah bootstrap */
+  font-weight: 600;
+  padding: 0;
+  margin-right: 0.5rem;
   cursor: pointer;
 }
 
-.token-details-mobile {
-  width: max-content;
-  min-width: 180px;
+.mobile-token-wrapper {
+  position: relative;
 }
+
+.mobile-token-card {
+  background-color: #fff; /* Putih gading */
+  border: 1px solid #ddd;
+  border-radius: 20px;
+  padding: 4px 10px;
+  cursor: pointer;
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+/* Container box detail token dan top up */
+.mobile-token-details-box {
+  position: absolute;
+  top: 110%;
+  right: 0;
+  background-color: #fff;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  padding: 12px;
+  z-index: 10;
+  width: 260px;
+  box-shadow: 0 0 8px rgba(0, 0, 0, 0.1);
+}
+
+/* List group tombol paket token */
+.mobile-token-list-group .list-group-item {
+  font-size: 0.85rem;
+  padding: 8px 12px;
+  border-radius: 6px;
+  margin-bottom: 6px;
+  border: 1px solid #ddd;
+  color: #333;
+  background-color: #f9f9f9;
+}
+
+.mobile-token-list-group .list-group-item.active {
+  background-color: #0077c8;
+  color: #fff;
+  border-color: #0077c8;
+}
+
+/* Box ringkasan paket token */
+.mobile-token-summary-box {
+  background-color: #fefefe;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  padding: 10px;
+  font-size: 0.85rem;
+}
+
+.mobile-token-summary-box p {
+  margin-bottom: 6px;
+}
+
+/* Tombol konfirmasi */
+.mobile-token-btn-konfirmasi {
+  font-size: 0.85rem;
+  padding: 6px 12px;
+  border-radius: 6px;
+  font-weight: 600;
+}
+
+/* Info nomor WA */
+.mobile-token-info {
+  font-size: 0.75rem;
+  color: #666;
+  margin-top: 0.5rem;
+}
+
 
 .fab-container {
   position: fixed;
@@ -984,4 +1077,15 @@ form input {
 
 .mobile-saldo-card:hover {
   background-color: #f9f9f9;
+}
+
+.mobile-mini-bank-card {
+  margin-bottom: 4rem; /* beri ruang untuk total-bayar-box */
+}
+
+.card-header {
+  background: #f8f9fa;
+  padding: 0.75rem 1rem;
+  font-weight: bold;
+  border-bottom: 1px solid #ddd;
 }

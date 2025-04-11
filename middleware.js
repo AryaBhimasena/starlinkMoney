@@ -9,28 +9,40 @@ export function middleware(req) {
   const isMobile = /mobile|android|iphone|ipad|ipod/i.test(userAgent);
   const hostname = req.headers.get("host");
 
-  // ✅ Jika akses dari HP ke domain utama, redirect ke subdomain mobile
+  // ✅ Cek apakah sudah pernah redirect (hindari infinite loop)
+  const hasRedirected = req.cookies.get("mobile_redirected");
+
+  // ✅ Redirect ke subdomain mobile sekali saja
   if (
-    hostname === "starlinkmoney.vercel.app" &&
+    hostname?.includes("starlinkmoney") &&
     isMobile &&
+    !hostname.startsWith("m-") &&
     !url.pathname.startsWith("/m") &&
-    !url.pathname.startsWith("/api")
+    !url.pathname.startsWith("/api") &&
+    !hasRedirected
   ) {
-    return NextResponse.redirect("https://m-starlinkmoney.vercel.app");
+    const redirectUrl = new URL(req.url);
+    redirectUrl.hostname = "m-starlinkmoney.vercel.app";
+
+    const response = NextResponse.redirect(redirectUrl);
+    response.cookies.set("mobile_redirected", "true", {
+      maxAge: 60 * 60 * 24, // berlaku 1 hari
+    });
+    return response;
   }
 
-  // ✅ Rewrite semua path di subdomain mobile ke /m/*
+  // ✅ Rewrite subdomain mobile ke /m/*
   if (
-    hostname === "m-starlinkmoney.vercel.app" &&
+    hostname?.startsWith("m-") &&
     !url.pathname.startsWith("/m") &&
     !url.pathname.startsWith("/api")
   ) {
     url.pathname = `/m${url.pathname}`;
-    return NextResponse.rewrite(url); // tidak ubah URL di browser
+    return NextResponse.rewrite(url);
   }
 
-  // ✅ Auth check: redirect ke "/" jika belum login
-  if (!token && url.pathname !== "/") {
+  // ✅ Auth check (kecuali halaman login & register)
+  if (!token && !["/", "/register"].includes(url.pathname)) {
     return NextResponse.redirect(new URL("/", req.url));
   }
 
@@ -46,7 +58,7 @@ export function middleware(req) {
   return NextResponse.next();
 }
 
-// ✅ Jangan blokir asset, API, favicon, dll
+// ✅ Jangan blokir asset, API, dll
 export const config = {
   matcher: ["/((?!_next|api|login|public|bootstrap|favicon.ico).*)"],
 };

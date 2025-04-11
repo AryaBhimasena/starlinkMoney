@@ -6,8 +6,6 @@ import {
   getSaldoData,
   addSingleTransaksi,
   getTokenFromIndexedDB,
-  saveTempReff,
-  getTempReff,
 } from "../../../../services/indexedDBService";
 import { gunakanToken } from "../../../../services/tokenService";
 import { TransaksiContext } from "../../../../context/TransaksiContext";
@@ -15,7 +13,7 @@ import { SaldoContext } from "../../../../context/SaldoContext";
 import { TokenContext } from "../../../../context/tokenContext";
 import Swal from "sweetalert2";
 
-export default function TopUpPulsaPage() {
+export default function TopUpTokenPage() {
   const { updateSaldo } = useContext(SaldoContext);
   const { refreshTransaksi } = useContext(TransaksiContext);
   const { setTotalToken } = useContext(TokenContext);
@@ -23,138 +21,166 @@ export default function TopUpPulsaPage() {
   const [form, setForm] = useState({
     tanggal: new Date().toISOString().split("T")[0],
     noReff: "",
-    jenisTransaksi: "Top Up Pulsa",
+    jenisTransaksi: "Top Up Token Listrik",
     sumberDana: "",
     NoHP_IDPel: "",
+    operator: "",
     nominal: 0,
     hargaJual: 0,
     hargaModal: 0,
-    tarif: 0,
   });
 
   const [entitasId, setEntitasId] = useState("");
   const [listSumberDana, setListSumberDana] = useState([]);
+  const [saldoMap, setSaldoMap] = useState({});
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
 
+  const generateNoReff = async () => {
+    const today = new Date();
+    const dd = String(today.getDate()).padStart(2, "0");
+    const mm = String(today.getMonth() + 1).padStart(2, "0");
+    const yyyy = today.getFullYear();
+    const key = `token-${yyyy}${mm}${dd}`;
+    let counter = Number(localStorage.getItem(key) || "0") + 1;
+    localStorage.setItem(key, String(counter));
+    return `TL-${dd}${mm}${yyyy}${String(counter).padStart(3, "0")}`;
+  };
+
   useEffect(() => {
-    const init = async () => {
-      const userData = await getUserData();
-      if (!userData?.entitasId) return;
-      const id = userData.entitasId;
-      setEntitasId(id);
+    (async () => {
+      const user = await getUserData();
+      if (!user?.entitasId) return;
+      setEntitasId(user.entitasId);
 
-      const saldo = await getSaldoData(id);
-      const sumber = Object.keys(saldo || {});
-      const urutanSumber = sumber.sort((a, b) =>
-        a === "Uang Kas" ? -1 : b === "Uang Kas" ? 1 : 0
-      );
-      setListSumberDana(urutanSumber);
+      const saldoData = await getSaldoData(user.entitasId);
 
-      // Cek apakah ada transaksi sementara yang belum tersimpan
-      const temp = await getTempReff(id);
-      if (temp?.jenisTransaksi === "Top Up Pulsa") {
-        const confirm = await Swal.fire({
-          title: "Pulihkan transaksi sebelumnya?",
-          text: "Kami menemukan transaksi Top Up Pulsa yang belum tersimpan. Ingin melanjutkan?",
-          icon: "question",
-          showCancelButton: true,
-          confirmButtonText: "Ya, pulihkan",
-          cancelButtonText: "Tidak",
+      let saldoMap = {};
+      let filteredSumberDana = [];
+
+      if (Array.isArray(saldoData)) {
+        saldoData.forEach((item) => {
+          if (
+            item.entitasId === user.entitasId &&
+            item.sumberDana &&
+            typeof item.saldo === "number"
+          ) {
+            saldoMap[item.sumberDana] = {
+              id: item.id || item.sumberDana,
+              saldo: item.saldo,
+            };
+            filteredSumberDana.push(item.sumberDana);
+          }
         });
-
-        if (confirm.isConfirmed) {
-          setForm({
-            ...temp,
-            tanggal: new Date().toISOString().split("T")[0],
-          });
+      } else if (saldoData && typeof saldoData === "object") {
+        for (const [key, value] of Object.entries(saldoData)) {
+          if (typeof value === "number") {
+            saldoMap[key] = {
+              id: key,
+              saldo: value,
+            };
+            filteredSumberDana.push(key);
+          }
         }
       }
-    };
 
-    init();
+      filteredSumberDana.sort((a, b) =>
+        a === "Uang Kas" ? -1 : b === "Uang Kas" ? 1 : 0
+      );
+
+      setSaldoMap(saldoMap);
+      setListSumberDana(filteredSumberDana);
+
+      const noRef = await generateNoReff();
+      setForm((f) => ({ ...f, noReff: noRef }));
+    })();
   }, []);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    const numericFields = ["nominal", "tarif", "hargaJual", "hargaModal"];
-    const updatedValue = numericFields.includes(name) ? Number(value) : value;
-
-    const updatedForm = {
-      ...form,
-      [name]: updatedValue,
-    };
-
-    if (name === "hargaJual" || name === "hargaModal") {
-      updatedForm.tarif =
-        Number(updatedForm.hargaJual) - Number(updatedForm.hargaModal);
-    }
-
-    setForm(updatedForm);
-  };
-
-  const generateNoReff = () => {
-    const now = new Date();
-    return `TP-${now.getFullYear()}${now.getMonth() + 1}${now.getDate()}-${now.getTime()}`;
+    setForm((f) => ({
+      ...f,
+      [name]:
+        name === "nominal" || name === "hargaJual" || name === "hargaModal"
+          ? Number(value)
+          : value,
+    }));
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!entitasId) return alert("Entitas ID belum ditemukan.");
 
-    const requiredFields = ["sumberDana", "nominal", "hargaJual", "hargaModal"];
-    for (const field of requiredFields) {
-      if (!form[field]) {
-        return alert(`Field ${field} wajib diisi.`);
-      }
+    for (let k of ["sumberDana", "NoHP_IDPel", "operator", "nominal", "hargaJual", "hargaModal"]) {
+      if (!form[k]) return alert(`Field ${k} wajib diisi.`);
     }
 
     setLoading(true);
     setError("");
     setSuccess("");
 
-    const transaksiData = {
-      ...form,
-      noReff: generateNoReff(),
-      entitasId,
-      createdAt: Date.now(),
-      profit: Number(form.tarif),
-    };
-
     try {
       const tokenInfo = await getTokenFromIndexedDB(entitasId);
-      if ((tokenInfo?.totalToken ?? 0) < 1) {
-        await saveTempReff(entitasId, transaksiData);
-        setLoading(false);
-        return alert("Token tidak mencukupi. Data disimpan sementara.");
+      if ((tokenInfo?.totalToken ?? 0) < 1)
+        return alert("Token tidak mencukupi.");
+
+      const sumberDanaNama = form.sumberDana;
+      const sumberDanaId = saldoMap[sumberDanaNama]?.id;
+
+      if (!sumberDanaId) {
+        throw new Error("ID sumber dana tidak ditemukan.");
       }
 
-      const transaksiBaru = await addSingleTransaksi(transaksiData);
-      if (!transaksiBaru) throw new Error("Gagal menambahkan transaksi.");
+      const transaksiData = {
+        admin: 0,
+        createdAt: Date.now(),
+        entitasId,
+        jenisTransaksi: form.jenisTransaksi || "Top Up Token Listrik",
+        noReff: form.noReff,
+        tanggal: form.tanggal,
+        sumberDana: sumberDanaId,
+        nominal: form.nominal || 0,
+        hargaJual: form.hargaJual || 0,
+        hargaModal: form.hargaModal || 0,
+        NoHP_IDPel: form.NoHP_IDPel || "",
+        operator: form.operator || "",
+        pelanggan: "Umum",
+        penerima: "",
+        noRekening: "",
+        noToken: "",
+        tarif: 0,
+        totalBayar: 0,
+        profit: (form.hargaJual || 0) - (form.hargaModal || 0),
+      };
 
-      setTimeout(async () => {
-        const result = await gunakanToken(1, "Top Up Pulsa");
-        if (result.success) setTotalToken((prev) => prev - 1);
-      }, 0);
+      const tx = await addSingleTransaksi(transaksiData);
+      if (!tx) throw new Error("Gagal menambah transaksi.");
 
-      await updateSaldo(transaksiBaru.sumberDana, transaksiBaru);
-      refreshTransaksi();
+      await gunakanToken(1, "Top Up Token Listrik");
+      setTotalToken((t) => t - 1);
+      await updateSaldo(sumberDanaId, tx);
 
-      // Hapus temp reff setelah transaksi berhasil
-      await saveTempReff(entitasId, null);
+      Swal.fire({
+        icon: "success",
+        title: "Berhasil",
+        text: "Transaksi berhasil disimpan.",
+        timer: 2000,
+        showConfirmButton: false,
+      });
 
-      setSuccess("Transaksi berhasil disimpan.");
+      const today = new Date().toISOString().split("T")[0];
+      const noRef = await generateNoReff();
       setForm({
-        tanggal: new Date().toISOString().split("T")[0],
-        noReff: "",
-        jenisTransaksi: "Top Up Pulsa",
+        tanggal: today,
+        noReff: noRef,
+        jenisTransaksi: "Top Up Token Listrik",
         sumberDana: "",
         NoHP_IDPel: "",
+        operator: "",
         nominal: 0,
         hargaJual: 0,
         hargaModal: 0,
-        tarif: 0,
       });
     } catch (err) {
       console.error(err);
@@ -166,76 +192,127 @@ export default function TopUpPulsaPage() {
 
   return (
     <div className="mobile-mini-bank-container">
-      <div className="mobile-mini-bank-header">
-        <h5 className="mobile-mini-bank-title">Top Up Pulsa Telepon</h5>
-      </div>
-
       <form onSubmit={handleSubmit}>
         <div className="mobile-mini-bank-card">
-          {[
-            { label: "Tanggal", type: "date", name: "tanggal" },
-            {
-              label: "No Reff",
-              type: "text",
-              name: "noReff",
-              readOnly: true,
-              value: generateNoReff(),
-            },
-            {
-              label: "Jenis Transaksi",
-              type: "text",
-              name: "jenisTransaksi",
-              readOnly: true,
-            },
-            {
-              label: "Sumber Dana",
-              type: "select",
-              name: "sumberDana",
-              options: listSumberDana,
-            },
-            { label: "No HP Pelanggan", type: "text", name: "NoHP_IDPel" },
-            { label: "Nominal", type: "number", name: "nominal" },
-            { label: "Harga Jual", type: "number", name: "hargaJual" },
-            { label: "Harga Modal", type: "number", name: "hargaModal" },
-            {
-              label: "Tarif (Otomatis)",
-              type: "number",
-              name: "tarif",
-              readOnly: true,
-            },
-          ].map((field, index) => (
-            <div className="mobile-form-row" key={index}>
-              <span className="mobile-form-label">{field.label}</span>
-              {field.type === "select" ? (
-                <select
-                  className="mobile-form-input"
-                  name={field.name}
-                  value={form[field.name]}
-                  onChange={handleChange}
-                >
-                  <option value="">-- Pilih --</option>
-                  {field.options.map((opt) => (
-                    <option key={opt} value={opt}>
-                      {opt}
-                    </option>
-                  ))}
-                </select>
-              ) : (
-                <input
-                  className="mobile-form-input"
-                  type={field.type}
-                  name={field.name}
-                  value={field.value ?? form[field.name]}
-                  onChange={handleChange}
-                  readOnly={field.readOnly || false}
-                />
-              )}
-            </div>
-          ))}
+          <h5 className="card-header">Top Up Token Listrik</h5>
+
+          <div className="mobile-form-row">
+            <span className="mobile-form-label">Tanggal</span>
+            <input
+              type="date"
+              name="tanggal"
+              className="mobile-form-input"
+              value={form.tanggal}
+              onChange={handleChange}
+            />
+          </div>
+
+          <div className="mobile-form-row">
+            <span className="mobile-form-label">No Reff</span>
+            <input
+              type="text"
+              name="noReff"
+              className="mobile-form-input"
+              value={form.noReff}
+              readOnly
+            />
+          </div>
+
+          <div className="mobile-form-row">
+            <span className="mobile-form-label">Sumber Dana</span>
+            <select
+              name="sumberDana"
+              className="mobile-form-input"
+              value={form.sumberDana}
+              onChange={handleChange}
+            >
+              <option value="">-- Pilih --</option>
+              {listSumberDana.map((sdId) => {
+                const sumber = saldoMap[sdId];
+                return (
+                  <option key={sdId} value={sdId}>
+                    {sumber?.nama || sdId} — Rp{(sumber?.saldo || 0).toLocaleString("id-ID")}
+                  </option>
+                );
+              })}
+            </select>
+          </div>
+
+          <div className="mobile-form-row">
+            <span className="mobile-form-label">ID Pelanggan PLN</span>
+            <input
+              type="text"
+              name="NoHP_IDPel"
+              className="mobile-form-input"
+              value={form.NoHP_IDPel}
+              onChange={handleChange}
+            />
+          </div>
+
+          <div className="mobile-form-row">
+            <span className="mobile-form-label">Provider</span>
+            <select
+              name="operator"
+              className="mobile-form-input"
+              value={form.operator}
+              onChange={handleChange}
+            >
+              <option value="">-- Pilih Provider --</option>
+              {["PLN Prabayar", "PLN Pascabayar", "manual"].map((op) => (
+                <option key={op} value={op}>{op}</option>
+              ))}
+            </select>
+            {form.operator === "manual" && (
+              <input
+                type="text"
+                name="operator"
+                className="mobile-form-input mt-1"
+                placeholder="Masukkan provider"
+                onChange={handleChange}
+              />
+            )}
+          </div>
+
+          <div className="mobile-form-row">
+            <span className="mobile-form-label">Nominal (Rp)</span>
+            <input
+              type="number"
+              name="nominal"
+              className="mobile-form-input"
+              value={form.nominal}
+              onChange={handleChange}
+            />
+          </div>
+
+          <div className="mobile-form-row">
+            <span className="mobile-form-label">Harga Jual</span>
+            <input
+              type="number"
+              name="hargaJual"
+              className="mobile-form-input"
+              value={form.hargaJual}
+              onChange={handleChange}
+            />
+          </div>
+
+          <div className="mobile-form-row">
+            <span className="mobile-form-label">Harga Modal</span>
+            <input
+              type="number"
+              name="hargaModal"
+              className="mobile-form-input"
+              value={form.hargaModal}
+              onChange={handleChange}
+            />
+          </div>
         </div>
 
         <div className="mobile-mini-bank-submit">
-          <button type="submit" className="btn btn-primary btn-block" disabled={loading}>
+          <button
+            type="submit"
+            className="btn btn-primary btn-block"
+            disabled={loading}
+          >
             {loading ? "Menyimpan..." : "Simpan Transaksi"}
           </button>
         </div>

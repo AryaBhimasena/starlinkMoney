@@ -16,7 +16,7 @@ import "../public/bootstrap/css/custom.css";
 
 export default function RootLayout({ children }) {
   const pathname = usePathname();
-  const isAuthPage = pathname === "/";
+  const isAuthPage = pathname === "/" || pathname === "/register";
   const isMobileRoute = pathname.startsWith("/m");
 
   const [sidebarOpen, setSidebarOpen] = useState(true);
