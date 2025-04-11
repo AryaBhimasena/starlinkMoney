@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 
 export function middleware(req) {
-  const url = req.nextUrl;
+  const url = req.nextUrl.clone();
   const token = req.cookies.get("token");
   const role = req.cookies.get("role");
 
@@ -9,31 +9,21 @@ export function middleware(req) {
   const isMobile = /mobile|android|iphone|ipad|ipod/i.test(userAgent);
   const hostname = req.headers.get("host");
 
-  // ✅ Cek apakah sudah pernah redirect (hindari infinite loop)
-  const hasRedirected = req.cookies.get("mobile_redirected");
-
-  // ✅ Redirect ke subdomain mobile sekali saja
+  // ✅ Redirect ke m-domain jika pakai device mobile
   if (
-    hostname?.includes("starlinkmoney") &&
+    hostname === "starlinkmoney.vercel.app" &&
     isMobile &&
-    !hostname.startsWith("m-") &&
     !url.pathname.startsWith("/m") &&
-    !url.pathname.startsWith("/api") &&
-    !hasRedirected
+    !url.pathname.startsWith("/api")
   ) {
     const redirectUrl = new URL(req.url);
     redirectUrl.hostname = "m-starlinkmoney.vercel.app";
-
-    const response = NextResponse.redirect(redirectUrl);
-    response.cookies.set("mobile_redirected", "true", {
-      maxAge: 60 * 60 * 24, // berlaku 1 hari
-    });
-    return response;
+    return NextResponse.redirect(redirectUrl);
   }
 
-  // ✅ Rewrite subdomain mobile ke /m/*
+  // ✅ Rewrite semua request di m-subdomain ke /m/*
   if (
-    hostname?.startsWith("m-") &&
+    hostname === "m-starlinkmoney.vercel.app" &&
     !url.pathname.startsWith("/m") &&
     !url.pathname.startsWith("/api")
   ) {
@@ -41,12 +31,12 @@ export function middleware(req) {
     return NextResponse.rewrite(url);
   }
 
-  // ✅ Auth check (kecuali halaman login & register)
+  // ✅ Auth check
   if (!token && !["/", "/register"].includes(url.pathname)) {
     return NextResponse.redirect(new URL("/", req.url));
   }
 
-  // ✅ Role protection
+  // ✅ Role-based routing
   if (url.pathname.startsWith("/admin") && role !== "admin" && role !== "superadmin") {
     return NextResponse.redirect(new URL("/", req.url));
   }
@@ -58,7 +48,7 @@ export function middleware(req) {
   return NextResponse.next();
 }
 
-// ✅ Jangan blokir asset, API, dll
+// ✅ Matcher: jangan ganggu API, _next, asset
 export const config = {
   matcher: ["/((?!_next|api|login|public|bootstrap|favicon.ico).*)"],
 };
