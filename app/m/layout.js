@@ -21,7 +21,8 @@ import { getUserData } from "../../services/indexedDBService";
 export default function MobileLayout({ children }) {
   const pathname = usePathname();
   const router = useRouter();
-  const isHomePage = pathname === "/m";
+
+  const isPublicPage = pathname === "/m" || pathname === "/m/register";
 
   const [isBottomMenuOpen, setIsBottomMenuOpen] = useState(false);
   const [isCheckingAuth, setIsCheckingAuth] = useState(true);
@@ -39,14 +40,14 @@ export default function MobileLayout({ children }) {
         router.replace("/m");
       }
 
-      // ✅ Jika akses langsung ke /m, biarkan (jangan redirect ke halaman lain)
-      if (pathname === "/m") {
+      // ✅ Jika akses langsung ke halaman public, biarkan
+      if (isPublicPage) {
         setIsCheckingAuth(false);
         return;
       }
 
       // ✅ Jika user login dan berada di halaman lain, lanjut render
-      if (user && pathname !== "/m") {
+      if (user && !isPublicPage) {
         setIsCheckingAuth(false);
       }
     };
@@ -64,13 +65,13 @@ export default function MobileLayout({ children }) {
             <TransaksiProvider>
               <SaldoProvider>
                 <div className="mobile-wrapper">
-                  {!isHomePage && <NavbarMobile />}
+                  {!isPublicPage && <NavbarMobile />}
 
                   <div className="mobile-scroll-container">
                     <div className="mobile-content p-3">{children}</div>
                   </div>
 
-                  {!isHomePage && (
+                  {!isPublicPage && (
                     <>
                       <BottomNav onMenuToggle={setIsBottomMenuOpen} />
                       <FabModal hidden={isBottomMenuOpen} />

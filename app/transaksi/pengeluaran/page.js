@@ -12,40 +12,39 @@ import {
 } from "../../../../services/transaksiService";
 import { getSaldoByEntitasId, updateSaldo } from "../../../../services/saldoService";
 import { hitungSaldo } from "../../../../lib/hitungSaldo";
-import { gunakanToken } from "../../../../services/tokenService";
 
 // Context
-import { SaldoContext } from "../../../../context/SaldoContext";
 import { TransaksiContext } from "../../../../context/TransaksiContext";
-import { TokenContext } from "../../../../context/tokenContext";
+import { SaldoContext } from "../../../../context/SaldoContext";
 
-export default function TopUpPulsaPage() {
+export default function PengeluaranPage() {
+  // Contexts
   const { updateSaldoState } = useContext(SaldoContext);
   const { refreshTransaksi } = useContext(TransaksiContext);
-  const { setTotalToken } = useContext(TokenContext);
 
+  // Initial Form
   const initialForm = {
     date: new Date().toISOString().split("T")[0],
     noReff: "AUTO-GENERATED",
-    jenisTransaksi: "Top Up Pulsa",
+    jenisTransaksi: "Pengeluaran",
     sumberDana: "",
-    noHP: "",
-    operator: "",
+    keterangan: "",
     nominal: 0,
-    hargaJual: 0,
-    hargaModal: 0,
+    biayaAdmin: 0,
   };
 
+  // State
   const [form, setForm] = useState(initialForm);
   const [entitasId, setEntitasId] = useState("");
   const [saldoList, setSaldoList] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
 
-  const operatorOptions = ["Telkomsel", "Indosat", "XL", "Axis", "Tri", "Smartfren"];
-
+  // Helper
   const formatRupiah = (angka) => `Rp${angka.toLocaleString("id-ID")}`;
 
+  // useEffect 1: Inisialisasi halaman
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -53,12 +52,14 @@ export default function TopUpPulsaPage() {
         if (!userData?.entitasId) return setError("Entitas tidak ditemukan.");
 
         setEntitasId(userData.entitasId);
+
         const saldoData = await getSaldoByEntitasId(userData.entitasId);
         setSaldoList(Array.isArray(saldoData) ? saldoData : []);
 
-        const noReff = await generateNoReff(userData.entitasId, "Top Up Pulsa");
-        setForm((prev) => ({ ...prev, noReff }));
+        const generatedNoReff = await generateNoReff(userData.entitasId, "Pengeluaran");
+        setForm((prev) => ({ ...prev, noReff: generatedNoReff }));
       } catch (err) {
+        console.error("Gagal inisialisasi data:", err);
         setError("Gagal mengambil data pengguna atau saldo.");
       }
     };
@@ -66,91 +67,79 @@ export default function TopUpPulsaPage() {
     fetchData();
   }, []);
 
+  // Handle input form
   const handleChange = (e) => {
     const { name, value } = e.target;
     setForm((prev) => ({
       ...prev,
-      [name]: ["nominal", "hargaJual", "hargaModal"].includes(name) ? Number(value) : value,
+      [name]: ["nominal", "biayaAdmin"].includes(name) ? Number(value) : value,
     }));
   };
 
+  // Submit form
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
+    setSuccess("");
     setLoading(true);
 
     if (!entitasId) return alert("Entitas ID belum ditemukan.");
-    if (!form.nominal || !form.sumberDana || !form.noHP || !form.operator)
-      return alert("Lengkapi semua data yang wajib.");
+    if (!form.nominal || !form.sumberDana) return alert("Nominal dan Sumber Dana wajib diisi.");
+    if (!form.date) return alert("Tanggal transaksi harus diisi.");
+    if (form.nominal > saldoList.find(item => item.id === form.sumberDana)?.saldo) {
+      return alert("Saldo tidak mencukupi untuk transaksi ini.");
+    }
 
     let transaksiBaru = null;
     let saldoData = null;
-    let uangKasId = null;
 
     try {
-      const tokenResult = await gunakanToken(entitasId, 1, "Top Up Pulsa");
-      if (!tokenResult.success) throw new Error(tokenResult.error || "Gagal menggunakan token.");
-
-      saldoData = saldoList.find(item =>
-        [item.id, item.nama, item.sumberDana].map(x => x?.toLowerCase().trim())
-          .includes(form.sumberDana.toLowerCase().trim())
-      );
-
+      saldoData = saldoList.find(item => item.id === form.sumberDana);
       if (!saldoData) throw new Error(`Sumber Dana '${form.sumberDana}' tidak ditemukan.`);
-      if (form.nominal > saldoData.saldo) throw new Error(`Saldo tidak mencukupi.`);
-
-      const uangKas = saldoList.find(item => item.sumberDana.toLowerCase() === "uang kas");
-      if (!uangKas) throw new Error("Sumber Dana 'Uang Kas' tidak ditemukan.");
-      uangKasId = uangKas.id;
-
-      const noReffBaru = await generateNoReff(entitasId, "Top Up Pulsa");
 
       const transaksiData = {
         ...form,
-        noReff: noReffBaru,
         entitasId,
         createdAt: Date.now(),
-        profit: Number(form.hargaJual) - Number(form.hargaModal),
-        namaSumberDana: saldoData.sumberDana,
       };
 
       transaksiBaru = await tambahTransaksi(transaksiData);
       if (!transaksiBaru) throw new Error("Gagal menyimpan transaksi.");
 
-      const { saldoBaruSumber, saldoBaruUangKas, error } = await hitungSaldo(saldoList, transaksiData);
+      const { saldoBaruSumber, error } = await hitungSaldo(saldoList, transaksiData);
       if (error) throw new Error(error);
 
       await updateSaldo(entitasId, form.sumberDana, saldoBaruSumber);
-      await updateSaldo(entitasId, uangKasId, saldoBaruUangKas);
       await updateSaldoState(saldoData.id, transaksiData);
 
       Swal.fire({
         icon: "success",
-        title: "Berhasil",
-        text: "Transaksi berhasil disimpan.",
+        title: "Transaksi Berhasil",
+        text: "Data transaksi berhasil ditambahkan.",
       });
 
-      const newNoReff = await generateNoReff(entitasId, "Top Up Pulsa");
-      setForm({ ...initialForm, noReff: newNoReff });
+      setForm({ ...initialForm, noReff: await generateNoReff(entitasId, "Pengeluaran") });
+
       const updatedSaldo = await getSaldoByEntitasId(entitasId);
       setSaldoList(updatedSaldo);
     } catch (err) {
+      console.error("Gagal memproses transaksi:", err);
       if (transaksiBaru?.id) await rollbackTransaksi(transaksiBaru.id);
-      setError(err.message || "Gagal menyimpan transaksi.");
+      setError(err.message || "Gagal memproses transaksi.");
     }
 
     setLoading(false);
   };
 
   return (
-    <div className="mobile-mini-bank-container">
-      <div className="mobile-mini-bank-header">
-        <h5 className="mobile-mini-bank-title">Top Up Pulsa Telepon</h5>
+    <div className="mobile-pengeluaran-container">
+      <div className="mobile-pengeluaran-header">
+        <h5 className="mobile-pengeluaran-title">Transaksi Pengeluaran</h5>
       </div>
 
       <form onSubmit={handleSubmit}>
-        <div className="mobile-mini-bank-card">
-          {[
+        <div className="mobile-pengeluaran-card">
+          {[ 
             { label: "Tanggal", type: "date", name: "date" },
             { label: "No Reff", type: "text", name: "noReff", readOnly: true },
             {
@@ -162,19 +151,9 @@ export default function TopUpPulsaPage() {
                 value: item.id,
               })),
             },
-            { label: "No HP", type: "text", name: "noHP" },
-            {
-              label: "Operator",
-              type: "select",
-              name: "operator",
-              options: operatorOptions.map((item) => ({
-                label: item,
-                value: item,
-              })),
-            },
+            { label: "Keterangan", type: "text", name: "keterangan" },
             { label: "Nominal", type: "number", name: "nominal" },
-            { label: "Harga Jual", type: "number", name: "hargaJual" },
-            { label: "Harga Modal", type: "number", name: "hargaModal" },
+            { label: "Biaya Admin", type: "number", name: "biayaAdmin" },
           ].map((field, index) => (
             <div className="mobile-form-row" key={index}>
               <span className="mobile-form-label">{field.label}</span>
@@ -187,7 +166,7 @@ export default function TopUpPulsaPage() {
                 >
                   <option value="">-- Pilih --</option>
                   {field.options.map((opt, idx) => (
-                    <option key={idx} value={opt.value}>
+                    <option value={opt.value} key={opt.value || idx}>
                       {opt.label}
                     </option>
                   ))}
@@ -206,13 +185,14 @@ export default function TopUpPulsaPage() {
           ))}
         </div>
 
-        <div className="mobile-mini-bank-submit">
+        <div className="mobile-pengeluaran-submit">
           <button type="submit" className="btn btn-primary btn-block" disabled={loading}>
             {loading ? "Menyimpan..." : "Simpan Transaksi"}
           </button>
         </div>
 
         {error && <p className="text-danger mt-2">{error}</p>}
+        {success && <p className="text-success mt-2">{success}</p>}
       </form>
     </div>
   );

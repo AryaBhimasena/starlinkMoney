@@ -20,17 +20,13 @@ export default function RootLayout({ children }) {
   const isMobileRoute = pathname.startsWith("/m");
 
   const [sidebarOpen, setSidebarOpen] = useState(true);
-
-  useEffect(() => {
+useEffect(() => {
     if (typeof window !== "undefined") {
       const isMobile = window.innerWidth <= 768;
       const isOnMainDomain = window.location.hostname === "starlinkmoney.vercel.app";
       const isAlreadyOnMobile = pathname.startsWith("/m");
 
-      // 🚀 Redirect to m-subdomain for mobile users
-      if (isMobile && isOnMainDomain && !isAlreadyOnMobile) {
-        window.location.href = `https://m-starlinkmoney.vercel.app/m`;
-      }
+
 
       if (isMobile) {
         setSidebarOpen(false);

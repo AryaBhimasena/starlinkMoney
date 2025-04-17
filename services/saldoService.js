@@ -1,62 +1,95 @@
-import { getSaldoData, saveSaldoBySumberDana } from "./indexedDBService";
+import {
+  getCollectionRef,
+  getDocsByField,
+  setDocData,
+  updateDocData,
+  deleteDocById
+} from "./firestoreService";
 
-// Fungsi untuk memperbarui saldo di IndexedDB berdasarkan transaksi
-export const updateSaldo = async (entitasId, transaksiData) => {
+/**
+ * Fungsi untuk menambahkan saldo baru
+ */
+export const addSaldo = async (entitasId, sumberDana, saldoAwal, kategori) => {
   try {
-    // Ambil semua data saldo
-    const allSaldo = await getSaldoData();
+    // Cek apakah saldo untuk sumber dana ini sudah ada
+    const saldoDocs = await getDocsByField("saldo", "entitasId", entitasId);
+    const existingSaldo = saldoDocs.find(doc => doc.sumberDana === sumberDana);
 
-    // Cari saldo sesuai entitas dan sumber dana
-    const saldoItem = allSaldo.find(item =>
-      item.entitasId === entitasId &&
-      (item.sumberDana === transaksiData.sumberDana ||
-        (transaksiData.sumberDana === "Uang Kas" && item.sumberDana.toLowerCase() === "uang kas"))
-    );
-
-    if (!saldoItem) {
-      throw new Error("❌ Saldo tidak ditemukan untuk sumber dana tersebut.");
+    if (existingSaldo) {
+      throw new Error(`Saldo untuk sumber dana "${sumberDana}" sudah ada.`);
     }
 
-    let saldoBaru = saldoItem.saldo;
+    const now = new Date();
+    const newSaldo = {
+      entitasId,
+      sumberDana,
+      saldo: saldoAwal,
+      kategori,
+      dibuatPada: now,
+      createdAt: now,
+      updatedAt: now,
+    };
 
-    // Perhitungan berdasarkan jenis transaksi
-    if (transaksiData.jenis === "Kas Masuk") {
-      saldoBaru += transaksiData.nominal;
-    } else if (transaksiData.jenis === "Kas Keluar") {
-      if (saldoBaru < transaksiData.nominal) {
-        throw new Error("❌ Saldo tidak mencukupi.");
-      }
-      saldoBaru -= transaksiData.nominal;
-    }
+    // Gunakan format dokumen ID: entitasId_namaSumberDana_diformat
+    const saldoDocId = `${entitasId}_${sumberDana.replace(/\s+/g, "_").toLowerCase()}`;
 
-    // Simpan saldo baru
-    await saveSaldoBySumberDana(transaksiData.sumberDana, saldoBaru);
+    await setDocData("saldo", saldoDocId, newSaldo);
+    console.log(`✅ Saldo untuk "${sumberDana}" berhasil ditambahkan.`);
   } catch (error) {
-    console.error("❌ Error memperbarui saldo:", error);
+    console.error("❌ Gagal menambahkan saldo:", error);
     throw error;
   }
 };
 
-// Fungsi untuk mencatat transaksi ke IndexedDB
-export const saveTransaksi = async (entitasId, transaksiData) => {
+/**
+ * Fungsi untuk mendapatkan saldo berdasarkan entitasId
+ */
+export const getSaldoByEntitasId = async (entitasId) => {
   try {
-    const transaksi = {
-      entitas_id: entitasId,
-      jenis: transaksiData.jenis,
-      sumber_dana: transaksiData.sumberDana,
-      nominal: transaksiData.nominal,
-      tanggal: Date.now(),
-      status: "berhasil",
-    };
-
-    const db = await openDB();
-    const tx = db.transaction("transaksi", "readwrite");
-    const store = tx.objectStore("transaksi");
-
-    await store.add(transaksi);
-    await tx.done;
+    // Ambil saldo berdasarkan entitasId
+    const saldoDocs = await getDocsByField("saldo", "entitasId", entitasId);
+	console.log("Saldo ditemukan:", saldoDocs); // Periksa hasil query
+    return saldoDocs;
   } catch (error) {
-    console.error("❌ Error mencatat transaksi:", error);
+    console.error("❌ Gagal mengambil saldo:", error);
+    throw error;
+  }
+};
+
+/**
+ * Fungsi untuk memperbarui saldo berdasarkan ID
+ */
+export const updateSaldo = async (entitasId, saldoDocId, saldoBaru) => {
+  try {
+    if (!saldoDocId) throw new Error("ID dokumen saldo tidak ditemukan.");
+
+    await updateDocData("saldo", saldoDocId, { saldo: saldoBaru });
+    console.log(`✅ Saldo ID ${saldoDocId} berhasil diperbarui dengan nilai: ${saldoBaru}`);
+  } catch (error) {
+    console.error("❌ Gagal memperbarui saldo:", error);
+    throw error;
+  }
+};
+
+
+/**
+ * Fungsi untuk menghapus saldo berdasarkan ID
+ */
+export const deleteSaldo = async (entitasId, sumberDana) => {
+  try {
+    // Ambil dokumen saldo berdasarkan entitasId dan sumberDana
+    const saldoDocs = await getDocsByField("saldo", "entitasId", entitasId);
+    const saldoItem = saldoDocs.find(doc => doc.sumberDana === sumberDana);
+
+    if (!saldoItem) {
+      throw new Error("Saldo untuk sumber dana ini tidak ditemukan.");
+    }
+
+    // Hapus saldo
+    await deleteDocById("saldo", saldoItem.id);
+    console.log(`Saldo untuk entitas ${entitasId} dan sumber dana ${sumberDana} berhasil dihapus.`);
+  } catch (error) {
+    console.error("❌ Gagal menghapus saldo:", error);
     throw error;
   }
 };

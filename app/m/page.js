@@ -5,15 +5,7 @@ import { useRouter } from 'next/navigation';
 import { signInWithEmailAndPassword } from 'firebase/auth';
 import { auth } from '../../lib/firebaseConfig';
 import Cookies from 'js-cookie';
-import {
-  clearIndexedDB,
-  saveUserData,
-  syncUserData,
-  rekonsiliasiData,
-  getUserData,
-  fetchAndSaveTokenData,
-} from '../../services/indexedDBService';
-import Image from 'next/image';
+import { clearIndexedDB, saveUserData } from '../../services/indexedDBService';
 
 export default function MobileLoginPage() {
   const router = useRouter();
@@ -24,10 +16,9 @@ export default function MobileLoginPage() {
   const [currentSlide, setCurrentSlide] = useState(0);
   const [paused, setPaused] = useState(false);
   const [startX, setStartX] = useState(0);
-	
+
   const nextSlide = () => {
     setCurrentSlide((prev) => (prev + 1) % 3);
-
   };
 
   useEffect(() => {
@@ -64,13 +55,6 @@ export default function MobileLoginPage() {
       Cookies.set('token', token, { expires: 1 });
 
       await saveUserData(userCredential.user.uid);
-      await syncUserData();
-      const userData = await getUserData();
-      const entitasId = userData?.entitasId;
-      if (!entitasId) throw new Error('entitasId tidak ditemukan');
-
-      await fetchAndSaveTokenData(entitasId);
-      await rekonsiliasiData();
 
       router.push('/m/dashboard');
     } catch (err) {
@@ -85,104 +69,100 @@ export default function MobileLoginPage() {
     }
   };
 
-return (
-  <div className="mobile-home-container">
-    {/* === Carousel === */}
-    <div
-      className="mobile-carousel"
-      onTouchStart={(e) => {
-        setPaused(true);
-        setStartX(e.touches[0].clientX);
-      }}
-      onTouchEnd={(e) => {
-        const endX = e.changedTouches[0].clientX;
-        const diff = startX - endX;
-        if (diff > 50) nextSlide();
-        if (diff < -50) setCurrentSlide((prev) => (prev - 1 + 3) % 3);
-        setPaused(false);
-      }}
-    >
+  return (
+    <div className="mobile-home-container">
+      {/* === Carousel === */}
       <div
-        className="carousel-slides"
-        style={{ transform: `translateX(-${currentSlide * 100}%)` }}
+        className="mobile-carousel"
+        onTouchStart={(e) => {
+          setPaused(true);
+          setStartX(e.touches[0].clientX);
+        }}
+        onTouchEnd={(e) => {
+          const endX = e.changedTouches[0].clientX;
+          const diff = startX - endX;
+          if (diff > 50) nextSlide();
+          if (diff < -50) setCurrentSlide((prev) => (prev - 1 + 3) % 3);
+          setPaused(false);
+        }}
       >
-        <div className="carousel-slide">
-          <h2>Starlink Money</h2>
-          <p>Solusi digital untuk usaha mini bank Anda.</p>
-          <ul className="checklist">
-            <li> Transaksi otomatis</li>
-            <li> Laporan real-time</li>
-            <li> Semua dalam satu platform</li>
-          </ul>
+        <div className="carousel-slides" style={{ transform: `translateX(-${currentSlide * 100}%)` }}>
+          <div className="carousel-slide">
+            <h2>Starlink Money</h2>
+            <p>Solusi digital untuk usaha mini bank Anda.</p>
+            <ul className="checklist">
+              <li> Transaksi otomatis</li>
+              <li> Laporan real-time</li>
+              <li> Semua dalam satu platform</li>
+            </ul>
+          </div>
+          <div className="carousel-slide">
+            <h3>Paket Token</h3>
+            <ul className="token-pack">
+              <li><strong>Starter:</strong> 50 Token (Rp 20rb)</li>
+              <li><strong>Medium:</strong> 475 Token (Rp 67rb)</li>
+              <li><strong>Enterprise:</strong> 1.500 Token (Rp 139rb)</li>
+            </ul>
+            <p className="bonus-info">Bonus: 20 Token untuk pengguna baru!</p>
+          </div>
+          <div className="carousel-slide">
+            <h2>Laporan Keuangan</h2>
+            <p>
+              Dapatkan laporan saldo dan histori transaksi <br />
+              secara langsung & transparan.
+            </p>
+          </div>
         </div>
-        <div className="carousel-slide">
-          <h3>Paket Token</h3>
-          <ul className="token-pack">
-            <li><strong>Starter:</strong> 50 Token (Rp 20rb)</li>
-            <li><strong>Medium:</strong> 475 Token (Rp 67rb)</li>
-            <li><strong>Enterprise:</strong> 1.500 Token (Rp 139rb)</li>
-          </ul>
-          <p className="bonus-info">Bonus: 20 Token untuk pengguna baru!</p>
-        </div>
-        <div className="carousel-slide">
-          <h2>Laporan Keuangan</h2>
-          <p>
-            Dapatkan laporan saldo dan histori transaksi <br />
-            secara langsung & transparan.
-          </p>
+
+        {/* === Dots === */}
+        <div className="carousel-dots">
+          {[0, 1, 2].map((i) => (
+            <span
+              key={i}
+              className={i === currentSlide ? 'dot active' : 'dot'}
+              onClick={() => {
+                setCurrentSlide(i);
+                setPaused(true);
+              }}
+            ></span>
+          ))}
         </div>
       </div>
 
-      {/* === Dots === */}
-      <div className="carousel-dots">
-        {[0, 1, 2].map((i) => (
-          <span
-            key={i}
-            className={i === currentSlide ? 'dot active' : 'dot'}
-            onClick={() => {
-              setCurrentSlide(i);
-              setPaused(true);
-            }}
-          ></span>
-        ))}
+      {/* === Login Form === */}
+      <div className="mobile-login-form">
+        <h3>Login</h3>
+        {error && <div className="alert alert-danger">{error}</div>}
+        <form onSubmit={handleLogin}>
+          <div className="form-group">
+            <input
+              type="email"
+              className="form-control"
+              placeholder="Email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              required
+              autoFocus
+            />
+          </div>
+          <div className="form-group">
+            <input
+              type="password"
+              className="form-control"
+              placeholder="Password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
+            />
+          </div>
+          <button type="submit" className="btn btn-primary btn-block">
+            Masuk
+          </button>
+        </form>
+        <p className="text-center mt-3">
+          Belum punya akun? <a href="/m/register">Daftar</a>
+        </p>
       </div>
     </div>
-
-    {/* === Login Form === */}
-    <div className="mobile-login-form">
-      <h3>Login</h3>
-      {error && <div className="alert alert-danger">{error}</div>}
-      <form onSubmit={handleLogin}>
-        <div className="form-group">
-          <input
-            type="email"
-            className="form-control"
-            placeholder="Email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            required
-            autoFocus
-          />
-        </div>
-        <div className="form-group">
-          <input
-            type="password"
-            className="form-control"
-            placeholder="Password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            required
-          />
-        </div>
-        <button type="submit" className="btn btn-primary btn-block">
-          Masuk
-        </button>
-      </form>
-      <p className="text-center mt-3">
-        Belum punya akun? <a href="/m/register">Daftar</a>
-      </p>
-    </div>
-  </div>
-);
-
+  );
 }

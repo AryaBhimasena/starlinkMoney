@@ -379,7 +379,7 @@ export async function saveUserData(uid) {
       entitasId: userData.entitasId,
       name: userData.name,
       role: userData.role,
-      email: userData.email,
+      Email: userData.Email,
     };
 
     return new Promise((resolve, reject) => {

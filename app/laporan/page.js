@@ -1,20 +1,16 @@
 "use client";
 
 import { useEffect, useState, useContext } from "react";
-import { getAllData } from "../../services/indexedDBService";
-import * as XLSX from "xlsx";
-import jsPDF from "jspdf";
-import "jspdf-autotable";
+import { 
+	getAllDocsEntitasId,
+	getDateFromCreatedAt 
+	} from "../../services/firestoreService";
+import { getUserData } from "../../services/indexedDBService";
+import { exportToPDF, exportToExcel } from "../../services/eksportDataService";
 import Swal from "sweetalert2";
 import "sweetalert2/dist/sweetalert2.min.css"; // opsional untuk style
 import { gunakanToken } from "../../services/tokenService"; // ✅ Tambahkan ini
 import { TokenContext } from "../../context/tokenContext"; // atau path sesuai struktur kamu
-
-const formatTanggalDDMMYYYY = (tanggalStr) => {
-  const [year, month, day] = tanggalStr.split("-");
-  return `${day.padStart(2, "0")}-${month.padStart(2, "0")}-${year}`;
-};
-
 
 const PageLaporan = () => {
   const { setTotalToken } = useContext(TokenContext);
@@ -23,290 +19,225 @@ const PageLaporan = () => {
   const [periode, setPeriode] = useState("bulanan");
   const [bulan, setBulan] = useState(new Date().getMonth() + 1);
   const [tahun, setTahun] = useState(new Date().getFullYear());
+  const [totalRow, setTotalRow] = useState([]);
+  const [entitasId, setEntitasId] = useState(null);
+  const [transaksiData, setTransaksiData] = useState([]);
+  const [isDataProcessed, setIsDataProcessed] = useState(false);
 
-	const generateTotalRow = () => {
-	  const totalRow = {
-		tanggal: "Total",
-		Transfer: filteredData.reduce((sum, i) => sum + i.Transfer, 0),
-		TarikTunai: filteredData.reduce((sum, i) => sum + i.TarikTunai, 0),
-		SetorTunai: filteredData.reduce((sum, i) => sum + i.SetorTunai, 0),
-		TopUp: filteredData.reduce((sum, i) => sum + i.TopUp, 0),
-		Pengeluaran: filteredData.reduce((sum, i) => sum + i.Pengeluaran, 0),
-		Total: filteredData.reduce((sum, i) => sum + i.Total, 0),
-		Omzet: filteredData.reduce((sum, i) => sum + i.Omzet, 0),
-		Profit: filteredData.reduce((sum, i) => sum + i.Profit, 0),
-	  };
-	  return totalRow;
-	};
+const formatTanggalDDMMYYYY = (input) => {
+  const date = getDateFromCreatedAt(input);
+  if (!date || isNaN(date.getTime())) return "";
 
-const handleExportExcel = async () => {
-  const result = await gunakanToken(3, "Export Laporan Excel"); // ✅ gunakanToken (misalnya butuh 2 token)
-  if (!result.success) {
-    Swal.fire({
-      icon: "error",
-      title: "Export Gagal",
-      text: result.error || "Token tidak mencukupi.",
-    });
-    return;
-  }
+  const day = String(date.getDate()).padStart(2, "0");
+  const month = String(date.getMonth() + 1).padStart(2, "0"); // 0-based
+  const year = date.getFullYear();
 
-  const namaToko = "Toko Contoh";
-  const tanggalAwal = new Date(tahun, bulan - 1, 1);
-  const tanggalAkhir = new Date(tahun, bulan, 0);
-  const formatter = new Intl.DateTimeFormat("id-ID", {
-    day: "numeric",
-    month: "long",
-    year: "numeric",
-  });
-  const periodeString = `${tanggalAwal.getDate()} - ${tanggalAkhir.getDate()} ${formatter.format(tanggalAkhir).split(" ")[1]} ${tahun}`;
-
-  const headerRows = [
-    ["Laporan Usaha"],
-    [namaToko],
-    [`Periode: ${periodeString}`],
-    [],
-  ];
-
-  const tableHeader = [
-    "Tanggal",
-    "Transfer",
-    "Tarik Tunai",
-    "Setor Tunai",
-    "Top Up",
-    "Pengeluaran",
-    "Total",
-    "Omzet",
-    "Profit",
-  ];
-
-  const tableBody = filteredData.map((row) => [
-    row.tanggal,
-    row.Transfer,
-    row.TarikTunai,
-    row.SetorTunai,
-    row.TopUp,
-    row.Pengeluaran,
-    row.Total,
-    formatRupiah(row.Omzet),
-    formatRupiah(row.Profit),
-  ]);
-
-  const totalRow = [
-    "Total",
-    ...["Transfer", "TarikTunai", "SetorTunai", "TopUp", "Pengeluaran", "Total"].map((key) =>
-      filteredData.reduce((sum, i) => sum + i[key], 0)
-    ),
-    formatRupiah(filteredData.reduce((sum, i) => sum + i["Omzet"], 0)),
-    formatRupiah(filteredData.reduce((sum, i) => sum + i["Profit"], 0)),
-  ];
-
-  const finalData = [...headerRows, tableHeader, ...tableBody, totalRow];
-  const ws = XLSX.utils.aoa_to_sheet(finalData);
-  const wb = XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(wb, ws, "Laporan");
-  XLSX.writeFile(wb, `Laporan_Usaha_${periode}_${bulan}_${tahun}.xlsx`);
-
-  Swal.fire({
-    icon: "success",
-    title: "Export Excel berhasil!",
-    showConfirmButton: false,
-    timer: 1500,
-  });
+  return `${day}-${month}-${year}`;
 };
 
-const handleExportPDF = async () => {
-  const result = await gunakanToken(3, "Export Laporan PDF");
-  if (!result.success) {
-    Swal.fire({
-      icon: "error",
-      title: "Export Gagal",
-      text: result.error || "Token tidak mencukupi.",
-    });
-    return;
-  }
+  const generateTotalRow = () => {
+    const dataValid = filteredData.filter((row) => row.tanggal !== "Total");
 
-  const doc = new jsPDF("p", "mm", "a4");
-  const namaToko = "Toko Contoh";
-  const tanggalAwal = new Date(tahun, bulan - 1, 1);
-  const tanggalAkhir = new Date(tahun, bulan, 0);
-  const formatter = new Intl.DateTimeFormat("id-ID", {
-    day: "numeric",
-    month: "long",
-    year: "numeric",
-  });
-  const periodeString = `${tanggalAwal.getDate()} - ${tanggalAkhir.getDate()} ${formatter.format(tanggalAkhir).split(" ")[1]} ${tahun}`;
+    return {
+      tanggal: "Total",
+      Transfer: dataValid.reduce((sum, i) => sum + (parseFloat(i.Transfer) || 0), 0),
+      TarikTunai: dataValid.reduce((sum, i) => sum + (parseFloat(i.TarikTunai) || 0), 0),
+      SetorTunai: dataValid.reduce((sum, i) => sum + (parseFloat(i.SetorTunai) || 0), 0),
+      TopUp: dataValid.reduce((sum, i) => sum + (parseFloat(i.TopUp) || 0), 0),
+      Pengeluaran: dataValid.reduce((sum, i) => sum + (parseFloat(i.Pengeluaran) || 0), 0),
+      Total: dataValid.reduce((sum, i) => sum + (parseFloat(i.Total) || 0), 0),
+      Omzet: dataValid.reduce((sum, i) => sum + (parseFloat(i.Omzet) || 0), 0),
+      Profit: dataValid.reduce((sum, i) => sum + (parseFloat(i.Profit) || 0), 0),
+    };
+  };
 
-  doc.setFontSize(14);
-  doc.text("Laporan Usaha", 105, 15, null, null, "center");
-  doc.setFontSize(11);
-  doc.text(namaToko, 105, 22, null, null, "center");
-  doc.text(`Periode: ${periodeString}`, 105, 28, null, null, "center");
+  const formatRupiah = (angka) => {
+    return angka ? `Rp ${angka.toLocaleString("id-ID")}` : "Rp 0";
+  };
 
-  const startY = 35;
-  const tableColumns = [
-    "Tanggal",
-    "Transfer",
-    "Tarik Tunai",
-    "Setor Tunai",
-    "Top Up",
-    "Pengeluaran",
-    "Total",
-    "Omzet",
-    "Profit",
-  ];
 
-  const tableRows = filteredData.map((row) => [
-    formatTanggalDDMMYYYY(row.tanggal),
-    row.Transfer,
-    row.TarikTunai,
-    row.SetorTunai,
-    row.TopUp,
-    row.Pengeluaran,
-    row.Total,
-    formatRupiah(row.Omzet),
-    formatRupiah(row.Profit),
-  ]);
-
-  const totalRow = [
-    "Total",
-    ...["Transfer", "TarikTunai", "SetorTunai", "TopUp", "Pengeluaran", "Total"].map((key) =>
-      filteredData.reduce((sum, i) => sum + i[key], 0)
-    ),
-    formatRupiah(filteredData.reduce((sum, i) => sum + i["Omzet"], 0)),
-    formatRupiah(filteredData.reduce((sum, i) => sum + i["Profit"], 0)),
-  ];
-  tableRows.push(totalRow);
-
-  doc.autoTable({
-    head: [tableColumns],
-    body: tableRows,
-    startY: startY,
-    styles: {
-      fontSize: 9,
-      halign: "center",
-      valign: "middle",
-    },
-    columnStyles: {
-      7: { halign: "right" }, // Omzet
-      8: { halign: "right" }, // Profit
-    },
-    headStyles: {
-      fillColor: [41, 128, 185],
-      textColor: 255,
-      fontStyle: "bold",
-    },
-    footStyles: {
-      fillColor: [52, 73, 94],
-      textColor: 255,
-      fontStyle: "bold",
-    },
-    alternateRowStyles: {
-      fillColor: [245, 245, 245],
-    },
-    didDrawPage: function (data) {
-      const pageCount = doc.internal.getNumberOfPages();
-      doc.setFontSize(8);
-      doc.text(`Page ${data.pageNumber} of ${pageCount}`, 200, 290, {
-        align: "right",
-      });
-    },
-  });
-
-  doc.save(`Laporan_Usaha_${periode}_${bulan}_${tahun}.pdf`);
-
-  Swal.fire({
-    icon: "success",
-    title: "Export PDF berhasil!",
-    showConfirmButton: false,
-    timer: 1500,
-  });
-};
- 
   useEffect(() => {
     const fetchData = async () => {
-      const data = await getAllData("transaksi");
-      setTransaksiList(data);
+      try {
+        const userData = await getUserData();
+        const fetchedEntitasId = userData.entitasId;
+        setEntitasId(fetchedEntitasId);
+        const data = await getAllDocsEntitasId("transaksi", fetchedEntitasId);
+
+        if (!Array.isArray(data)) {
+          console.error("Gagal mengambil data transaksi:", data.error);
+          return;
+        }
+
+        setTransaksiData(data);
+      } catch (error) {
+        console.error("Gagal memuat data:", error);
+      }
     };
+
     fetchData();
   }, []);
 
-  const handleProsesLaporan = () => {
-    const filtered = transaksiList.filter((item) => {
-      const [year, month] = item.tanggal.split("-").map(Number);
+const handleExportExcel = async () => {
+  if (!isDataProcessed) {
+    Swal.fire({
+      icon: "warning",
+      title: "Belum Diproses",
+      text: "Silakan klik tombol 'Proses' terlebih dahulu sebelum mengekspor data.",
+    });
+    return;
+  }
+  
+  const result = await gunakanToken(entitasId, 5, "Export Laporan Excel");
+  if (!result.success) {
+    Swal.fire({
+      icon: "error",
+      title: "Export Gagal",
+      text: result.error || "Token tidak mencukupi.",
+    });
+    return;
+  }
+
+  exportToExcel({
+    data: filteredData,
+    bulan,
+    tahun,
+    entitasId,
+    namaToko: "Toko Contoh",
+    formatRupiah,
+    generateTotalRow,
+  });
+};
+
+  const handleExportPDF = async () => {
+	if (!isDataProcessed) {
+    Swal.fire({
+      icon: "warning",
+      title: "Belum Diproses",
+      text: "Silakan klik tombol 'Proses' terlebih dahulu sebelum mengekspor data.",
+    });
+    return;
+  }
+  
+    const result = await gunakanToken(entitasId, 5, "Export Laporan PDF");
+    if (!result.success) {
+      Swal.fire({
+        icon: "error",
+        title: "Export Gagal",
+        text: result.error || "Token tidak mencukupi.",
+      });
+      return;
+    }
+
+    exportToPDF({
+      data: filteredData,
+      bulan,
+      tahun,
+      periode,
+	  entitasId,
+      namaToko: "Toko Contoh",
+      formatRupiah,
+      generateTotalRow,
+    });
+  };
+
+const handleProsesLaporan = async () => {
+  try {
+    // Filter transaksi berdasarkan bulan dan tahun
+    const filtered = transaksiData.filter((item) => {
+      const transactionDate = getDateFromCreatedAt(item.createdAt);
+      if (!transactionDate) return false;
+
+      const year = transactionDate.getUTCFullYear();
+      const month = transactionDate.getUTCMonth() + 1;
       return month === bulan && year === tahun;
     });
 
     const rekap = {};
 
-filtered.forEach((trx) => {
-  const tglStr = formatTanggalDDMMYYYY(trx.tanggal);
-  if (!rekap[tglStr]) {
-    rekap[tglStr] = {
-      tanggal: tglStr,
-      Transfer: 0,
-      TarikTunai: 0,
-      SetorTunai: 0,
-      TopUp: 0,
-      Pengeluaran: 0,
-      Total: 0,
-      Omzet: 0,
-      Profit: 0,
-    };
-  }
+    // Proses transaksi yang sudah difilter untuk rekapitulasi
+    filtered.forEach((trx) => {
+      const transactionDate = getDateFromCreatedAt(trx.createdAt);
+      if (!transactionDate) return;
 
-  const jenis = trx.jenisTransaksi?.toLowerCase() || "";
-  const nominal = trx.nominal || 0;
-  const profit = Number(trx.profit) || Number(trx.tarif) || 0;
+      const tglStr = formatTanggalDDMMYYYY(transactionDate);
 
-  switch (jenis) {
-    case "transfer":
-      rekap[tglStr].Transfer += 1;
-      rekap[tglStr].Omzet += nominal;
-      break;
-    case "tarik tunai":
-      rekap[tglStr].TarikTunai += 1;
-      rekap[tglStr].Omzet += nominal;
-      break;
-    case "setor tunai":
-      rekap[tglStr].SetorTunai += 1;
-      rekap[tglStr].Omzet += nominal;
-      break;
-    case "top up e-wallet":
-    case "top up pulsa":
-    case "top up token listrik":
-      rekap[tglStr].TopUp += 1;
-      rekap[tglStr].Omzet += nominal;
-      break;
-    case "pengeluaran":
-      rekap[tglStr].Pengeluaran += 1;
-      break;
-  }
+      if (!rekap[tglStr]) {
+        rekap[tglStr] = {
+          tanggal: tglStr,
+          Transfer: 0,
+          TarikTunai: 0,
+          SetorTunai: 0,
+          TopUp: 0,
+          Pengeluaran: 0,
+          Total: 0,
+          Omzet: 0,
+          Profit: 0,
+        };
+      }
 
-  rekap[tglStr].Total =
-    rekap[tglStr].Transfer +
-    rekap[tglStr].TarikTunai +
-    rekap[tglStr].SetorTunai +
-    rekap[tglStr].TopUp +
-    rekap[tglStr].Pengeluaran;
+      const jenis = trx.jenisTransaksi?.toLowerCase() || "";
+      const nominal = trx.nominal || 0;
+      const profit = Number(trx.profit) || Number(trx.tarif) || 0;
 
-  rekap[tglStr].Profit += profit;
-});
+      switch (jenis) {
+        case "transfer":
+          rekap[tglStr].Transfer += 1;
+          rekap[tglStr].Omzet += nominal;
+          break;
+        case "tarik tunai":
+          rekap[tglStr].TarikTunai += 1;
+          rekap[tglStr].Omzet += nominal;
+          break;
+        case "setor tunai":
+          rekap[tglStr].SetorTunai += 1;
+          rekap[tglStr].Omzet += nominal;
+          break;
+        case "top up e-wallet":
+        case "top up pulsa":
+        case "top up token listrik":
+          rekap[tglStr].TopUp += 1;
+          rekap[tglStr].Omzet += nominal;
+          break;
+        case "pengeluaran":
+          rekap[tglStr].Pengeluaran += 1;
+          break;
+      }
 
+      // Menghitung Total dan Profit
+      rekap[tglStr].Total =
+        rekap[tglStr].Transfer +
+        rekap[tglStr].TarikTunai +
+        rekap[tglStr].SetorTunai +
+        rekap[tglStr].TopUp +
+        rekap[tglStr].Pengeluaran;
 
-    const hasil = Object.values(rekap).sort(
-      (a, b) => new Date(a.tanggal) - new Date(b.tanggal)
-    );
+      rekap[tglStr].Profit += profit;
+    });
+
+    // Mengurutkan hasil berdasarkan tanggal
+    const hasil = Object.values(rekap).sort((a, b) => {
+      const [da, ma, ya] = a.tanggal.split("-");
+      const [db, mb, yb] = b.tanggal.split("-");
+      return new Date(`${ya}-${ma}-${da}`) - new Date(`${yb}-${mb}-${db}`);
+    });
+
+    // Menyimpan data yang sudah diproses ke state filteredData
     setFilteredData(hasil);
-  };
+    setFilteredData((prevData) => [...prevData ]);
+	setIsDataProcessed(true);
+  } catch (error) {
+    console.error("Gagal memproses laporan:", error);
+  }
+    // Tambahkan console.log untuk melihat filteredData
+  console.log("Filtered Data:", filteredData);
+
+};
 
   const bulanOptions = [...Array(12).keys()].map((i) => i + 1);
   const tahunOptions = [...Array(5).keys()].map(
     (i) => new Date().getFullYear() - i
   );
-
-  const formatRupiah = (angka) => {
-    return angka ? `Rp ${angka.toLocaleString("id-ID")}` : "Rp 0";
-  };
 
   return (
     <>

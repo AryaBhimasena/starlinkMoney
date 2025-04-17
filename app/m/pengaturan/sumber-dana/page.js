@@ -49,31 +49,51 @@ const MobileSumberDana = () => {
     );
   }, [sumberDana, nominal, entitasId]);
 
-  const handleAddOrUpdate = async () => {
-    if (!isFormValid) return;
+const handleAddOrUpdate = async () => {
+  // Cek jika form tidak valid
+  if (!isFormValid) {
+    alert("❌ Data tidak valid! Pastikan semua input terisi dengan benar.");
+    return;
+  }
 
-    const payload = {
-      sumberDana,
-      kategori,
-      saldo: parseFloat(nominal),
-      entitasId,
-    };
+  // Pastikan nominal menjadi angka yang benar
+  const nominalAmount = parseFloat(nominal);
+  if (isNaN(nominalAmount) || nominalAmount < 0) {
+    alert("❌ Nominal saldo tidak valid.");
+    return;
+  }
 
+  const payload = {
+    sumberDana,
+    kategori,
+    saldo: nominalAmount,
+    entitasId,
+  };
+
+  try {
     if (isEdit && editId) {
+      // Update sumber dana jika sedang dalam mode edit
       await updateSumberDana(editId, payload);
     } else {
-      await tambahSumberDana(payload);
+      // Tambah sumber dana dan saldo baru
+      await tambahSumberDana(sumberDana, kategori, nominalAmount);
     }
 
+    // Reset form setelah berhasil
     setShowModal(false);
     setSumberDana("");
     setNominal("");
     setEditId(null);
     setIsEdit(false);
 
+    // Refresh data sumber dana
     const refreshed = await getSumberDanaByEntitas(entitasId);
     setData(refreshed);
-  };
+  } catch (error) {
+    console.error("❌ Gagal menambah atau mengedit sumber dana:", error);
+    alert("❌ Terjadi kesalahan. Coba lagi.");
+  }
+};
 
   const handleEdit = (item) => {
     setSumberDana(item.sumberDana);
@@ -135,52 +155,52 @@ const MobileSumberDana = () => {
         ))}
       </div>
 
-      {showModal && (
-        <div className="sumber-dana-modal-overlay">
-          <div className="sumber-dana-modal-content">
-            <h5 className="sumber-dana-modal-title">
-              {isEdit ? "Edit" : "Tambah"} Sumber Dana
-            </h5>
-            <input
-              className="form-control sumber-dana-modal-input mb-2"
-              type="text"
-              placeholder="Nama Sumber Dana"
-              value={sumberDana}
-              onChange={(e) => setSumberDana(e.target.value)}
-            />
-            <select
-              className="form-select sumber-dana-modal-input mb-2"
-              value={kategori}
-              onChange={(e) => setKategori(e.target.value)}
-            >
-              <option value="Bank">Bank</option>
-              <option value="E-Wallet">E-Wallet</option>
-            </select>
-            <input
-              className="form-control sumber-dana-modal-input mb-3"
-              type="number"
-              placeholder="Nominal Saldo"
-              value={nominal}
-              onChange={(e) => setNominal(e.target.value)}
-            />
-            <div className="sumber-dana-modal-footer">
-              <button
-                className="btn sumber-dana-btn-batal"
-                onClick={() => setShowModal(false)}
-              >
-                Batal
-              </button>
-              <button
-                className="btn sumber-dana-btn-simpan"
-                disabled={!isFormValid}
-                onClick={handleAddOrUpdate}
-              >
-                {isEdit ? "Update" : "Simpan"}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+{showModal && (
+  <div className="sumber-dana-modal-overlay">
+    <div className="sumber-dana-modal-content">
+      <h5 className="sumber-dana-modal-title">
+        {isEdit ? "Edit" : "Tambah"} Sumber Dana
+      </h5>
+      <input
+        className={`form-control sumber-dana-modal-input mb-2 ${!sumberDana.trim() ? "is-invalid" : ""}`}
+        type="text"
+        placeholder="Nama Sumber Dana"
+        value={sumberDana}
+        onChange={(e) => setSumberDana(e.target.value)}
+      />
+      <select
+        className={`form-select sumber-dana-modal-input mb-2 ${!kategori ? "is-invalid" : ""}`}
+        value={kategori}
+        onChange={(e) => setKategori(e.target.value)}
+      >
+        <option value="Bank">Bank</option>
+        <option value="E-Wallet">E-Wallet</option>
+      </select>
+      <input
+        className={`form-control sumber-dana-modal-input mb-3 ${isNaN(parseFloat(nominal)) || parseFloat(nominal) <= 0 ? "is-invalid" : ""}`}
+        type="number"
+        placeholder="Nominal Saldo"
+        value={nominal}
+        onChange={(e) => setNominal(e.target.value)}
+      />
+      <div className="sumber-dana-modal-footer">
+        <button
+          className="btn sumber-dana-btn-batal"
+          onClick={() => setShowModal(false)}
+        >
+          Batal
+        </button>
+        <button
+          className="btn sumber-dana-btn-simpan"
+          disabled={!isFormValid}
+          onClick={handleAddOrUpdate}
+        >
+          {isEdit ? "Update" : "Simpan"}
+        </button>
+      </div>
+    </div>
+  </div>
+)}
     </div>
   );
 };

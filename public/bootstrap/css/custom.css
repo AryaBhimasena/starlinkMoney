@@ -737,6 +737,46 @@ tr:hover {
     width: 100%;
 }
 
+.mutasi-saldo-btn-container {
+  min-width: 150px;
+  max-width: 200px;
+  margin-right:10px;
+}
+
+.mutasi-form-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  text-align: left;
+  padding: 0.5rem;
+}
+
+.mutasi-form-group {
+  display: flex;
+  flex-direction: column;
+}
+
+.mutasi-form-group label {
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+  color: #333;
+}
+
+.mutasi-input {
+  padding: 0.6rem 0.75rem;
+  border-radius: 4px;
+  border: 1px solid #ccc;
+  font-size: 1rem;
+  outline: none;
+}
+
+.mutasi-input:focus {
+  border-color: #007bff;
+  box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.25);
+}
+
+
+
 .saldo-card {
     flex: 1;
     min-width: 250px;
@@ -1383,4 +1423,206 @@ tr:hover {
   display: flex;
   justify-content: center;
   align-items: center;
+}
+
+/* File: styles/transaksi.css */
+
+.transaksi-type-selector {
+  position: absolute;
+  top: calc(100% + 4px);
+  right: 0;
+  z-index: 1050;
+  background-color: #fff;
+  border: 1px solid #dee2e6;
+  border-radius: 0.375rem;
+  box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.1);
+  width: 260px;
+  font-size: 0.95rem;
+  animation: fadeIn 0.2s ease-in-out;
+}
+
+.transaksi-type-selector ul {
+  list-style: none;
+  margin: 0;
+  padding: 0.25rem 0;
+}
+
+.transaksi-type-selector li {
+  padding: 0.5rem 1rem;
+  cursor: pointer;
+  transition: background-color 0.15s ease-in-out;
+  color: #212529;
+}
+
+.transaksi-type-selector li:hover {
+  background-color: #f8f9fa;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Backdrop Modal */
+.mobile-modal-backdrop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1050;
+}
+
+/* Modal Content */
+.mobile-modal-content {
+  background-color: #ffffff;
+  border-radius: 8px;
+  width: 100%;
+  max-width: 960px;
+  padding: 1.5rem;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  animation: fadeIn 0.3s ease-in-out;
+}
+
+/* Header */
+.mobile-mini-bank-header {
+  border-bottom: 1px solid #f0f0f0;
+  padding-bottom: 0.5rem;
+}
+
+.mobile-mini-bank-title {
+  font-size: 1.25rem;
+  font-weight: bold;
+  color: #333;
+}
+
+.mobile-mini-bank-header button {
+  border: none;
+  background: none;
+  font-size: 1.25rem;
+  color: #dc3545;
+  cursor: pointer;
+}
+
+/* Form Styling */
+.mobile-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+/* Menambahkan styling agar form lebih bersih dan rapi */
+/* Styling untuk form */
+.mobile-mini-bank-card {
+  padding: 25px;
+  background-color: #fff;
+  border-radius: 10px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  border: 1px solid #e0e0e0; /* Border yang sangat ringan */
+}
+
+/* Styling input */
+.mobile-form-input {
+  width: 100%;
+  padding: 12px;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  background-color: #fafafa;
+  font-size: 14px;
+  color: #333;
+  transition: border-color 0.3s ease;
+}
+
+.mobile-form-input:focus {
+  border-color: #0056b3; /* Biru gelap saat fokus */
+  background-color: #ffffff; /* Latar belakang putih saat fokus */
+}
+
+.mobile-form-label {
+  font-weight: 600;
+  color: #333;
+  margin-bottom: 6px;
+}
+
+/* Disabled input */
+.disabled-input {
+  background-color: #f8f8f8;
+  color: #888;
+  cursor: not-allowed;
+}
+
+/* Styling button */
+button[type="submit"] {
+  padding: 12px;
+  background-color: #0056b3; /* Biru gelap */
+  border: none;
+  color: white;
+  font-size: 16px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+button[type="submit"]:hover {
+  background-color: #004085; /* Biru lebih gelap saat hover */
+}
+
+button[type="submit"]:disabled {
+  background-color: #cccccc;
+  cursor: not-allowed;
+}
+
+/* Pesan error/sukses */
+.text-danger {
+  font-size: 14px;
+  font-weight: 500;
+  color: #e74c3c;
+}
+
+.text-success {
+  font-size: 14px;
+  font-weight: 500;
+  color: #2ecc71;
+}
+
+/* Responsif untuk perangkat kecil */
+@media (max-width: 576px) {
+  .mobile-form-input {
+    padding: 10px;
+  }
+}
+
+.total-bayar-box {
+  background-color: #fff3cd; /* kuning muda */
+  border: 1px solid #ffeeba;
+  padding: 8px;
+  border-radius: 0.75rem;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-grow: 1;
+  margin-right: 1rem;
+}
+
+.label-total {
+  font-size: 1rem;
+  color: #856404;
+  font-weight: 500;
+}
+
+.nominal-total {
+  font-size: 26px;
+  font-weight: bold;
+  color: #856404;
 }

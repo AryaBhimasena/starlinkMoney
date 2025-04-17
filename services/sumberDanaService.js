@@ -1,9 +1,12 @@
-import { db } from "../lib/firebaseConfig";
 import { 
-  collection, addDoc, getDocs, query, where, serverTimestamp, 
-  getDoc, doc, deleteDoc, updateDoc, runTransaction 
-} from "firebase/firestore";
-import { getCurrentUser } from "../lib/auth";
+	getDocsByField,
+	addDocToCollection,
+	getDocById,
+	deleteDocById,
+	updateDocData
+	} from "./firestoreService";
+import { addSaldo } from "./saldoService"; // Pastikan sudah diimpor
+import { getUserData } from "./indexedDBService";
 
 /**
  * Mengambil seluruh sumber dana yang ada, termasuk "Uang Kas" jika tidak ada
@@ -14,10 +17,7 @@ export const getAllSumberDana = async () => {
     if (!user) throw new Error("❌ Pengguna tidak terautentikasi.");
 
     const entitasId = user.entitasId;
-    const q = query(collection(db, COLLECTION_NAME), where("entitasId", "==", entitasId.trim()));
-    const querySnapshot = await getDocs(q);
-    
-    let sumberDanaArray = querySnapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
+    const sumberDanaArray = await getDocsByField("sumber_dana", "entitasId", entitasId.trim());
 
     // Pastikan "Uang Kas" selalu ada dalam daftar
     if (!sumberDanaArray.some((item) => item.sumberDana.toLowerCase() === "uang kas")) {
@@ -30,8 +30,6 @@ export const getAllSumberDana = async () => {
     throw error;
   }
 };
-
-const COLLECTION_NAME = "sumber_dana";
 
 /**
  * Menambah sumber dana baru dengan validasi ketat
@@ -42,48 +40,47 @@ export const tambahSumberDana = async (sumberDana, kategori, saldo) => {
   }
 
   try {
-    const user = await getCurrentUser();
-    if (!user) throw new Error("❌ Pengguna tidak terautentikasi.");
+    const user = await getUserData();
+    if (!user || !user.entitasId) throw new Error("❌ Pengguna tidak valid atau belum login.");
 
     const entitasId = user.entitasId;
     const sumberDanaTrimmed = sumberDana.trim();
+    const kategoriTrimmed = kategori.trim();
 
     // Cek apakah sumber dana dengan nama yang sama sudah ada
-    const q = query(collection(db, COLLECTION_NAME), where("entitasId", "==", entitasId), where("sumberDana", "==", sumberDanaTrimmed));
-    const existingDocs = await getDocs(q);
-
-    if (!existingDocs.empty) {
+    const existingDocs = await getDocsByField("sumber_dana", "entitasId", entitasId);
+    if (existingDocs.some((doc) => doc.sumberDana.toLowerCase() === sumberDanaTrimmed.toLowerCase())) {
       throw new Error(`❌ Sumber dana '${sumberDanaTrimmed}' sudah ada.`);
     }
 
-    const docRef = await addDoc(collection(db, COLLECTION_NAME), {
+    // Tambahkan ke koleksi sumber_dana
+    const docId = await addDocToCollection("sumber_dana", {
       entitasId,
       sumberDana: sumberDanaTrimmed,
-      kategori: kategori.trim(),
+      kategori: kategoriTrimmed,
       saldo: Number(saldo),
-      createdAt: serverTimestamp(),
-      createdBy: user.uid,
+      createdAt: new Date(),
     });
 
-    console.log("✅ Sumber dana berhasil ditambahkan:", docRef.id);
-    return docRef.id;
+    // Tambahkan ke koleksi saldo
+    await addSaldo(entitasId, sumberDanaTrimmed, Number(saldo), kategoriTrimmed, user?.uid || "");
+
+    console.log("✅ Sumber dana dan saldo berhasil ditambahkan:", docId);
+    return docId;
   } catch (error) {
-    console.error("❌ Gagal menambahkan sumber dana:", error);
+    console.error("❌ Gagal menambahkan sumber dana dan saldo:", error);
     throw error;
   }
 };
 
 /**
- * Mengambil daftar sumber dana berdasarkan entitas ID
+ * Mengambil sumber dana berdasarkan entitas ID
  */
 export const getSumberDanaByEntitas = async (entitasId) => {
-  if (!entitasId) throw new Error("❌ Entitas ID diperlukan untuk mengambil sumber dana.");
+  if (!entitasId) throw new Error("❌ Entitas ID diperlukan!");
 
   try {
-    const q = query(collection(db, COLLECTION_NAME), where("entitasId", "==", entitasId.trim()));
-    const querySnapshot = await getDocs(q);
-    
-    let sumberDanaArray = querySnapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
+    const sumberDanaArray = await getDocsByField("sumber_dana", "entitasId", entitasId.trim());
 
     // Pastikan "Uang Kas" selalu ada dalam daftar
     if (!sumberDanaArray.some((item) => item.sumberDana.toLowerCase() === "uang kas")) {
@@ -98,7 +95,7 @@ export const getSumberDanaByEntitas = async (entitasId) => {
 };
 
 /**
- * Menghapus sumber dana dengan validasi tambahan
+ * Menghapus sumber dana dengan validasi tambahan menggunakan entitasId
  */
 export const hapusSumberDana = async (sumberDanaId) => {
   if (!sumberDanaId) throw new Error("❌ ID sumber dana diperlukan!");
@@ -107,21 +104,21 @@ export const hapusSumberDana = async (sumberDanaId) => {
     const user = await getCurrentUser();
     if (!user) throw new Error("❌ Pengguna tidak terautentikasi.");
 
-    const sumberDanaRef = doc(db, COLLECTION_NAME, sumberDanaId);
-    const sumberDanaSnap = await getDoc(sumberDanaRef);
+    const sumberDana = await getDocById("sumber_dana", sumberDanaId);
+    if (!sumberDana) throw new Error("❌ Sumber dana tidak ditemukan.");
 
-    if (!sumberDanaSnap.exists()) throw new Error("❌ Sumber dana tidak ditemukan.");
-
-    const sumberDanaData = sumberDanaSnap.data();
-    if (sumberDanaData.entitasId !== user.entitasId) {
+    // Validasi bahwa entitasId sumber dana sesuai dengan milik pengguna
+    if (sumberDana.entitasId !== user.entitasId) {
       throw new Error("❌ Anda tidak memiliki akses ke entitas ini.");
     }
 
-    if (sumberDanaData.sumberDana.toLowerCase() === "uang kas") {
+    // Tidak bisa menghapus 'Uang Kas'
+    if (sumberDana.sumberDana.toLowerCase() === "uang kas") {
       throw new Error("❌ Sumber dana 'Uang Kas' tidak dapat dihapus!");
     }
 
-    await deleteDoc(sumberDanaRef);
+    // Melakukan penghapusan sumber dana
+    await deleteDocById("sumber_dana", sumberDanaId);
     console.log("✅ Sumber dana berhasil dihapus.");
   } catch (error) {
     console.error("❌ Gagal menghapus sumber dana:", error);
@@ -130,7 +127,7 @@ export const hapusSumberDana = async (sumberDanaId) => {
 };
 
 /**
- * Memperbarui sumber dana dengan Firestore Transaction
+ * Memperbarui sumber dana dengan validasi menggunakan entitasId
  */
 export const updateSumberDana = async (sumberDanaId, data) => {
   if (!sumberDanaId || !data || typeof data !== "object") {
@@ -141,56 +138,34 @@ export const updateSumberDana = async (sumberDanaId, data) => {
     const user = await getCurrentUser();
     if (!user) throw new Error("❌ Pengguna tidak terautentikasi.");
 
-    const sumberDanaRef = doc(db, COLLECTION_NAME, sumberDanaId);
+    // Mengambil data sumber dana berdasarkan ID
+    const sumberDana = await getDocById("sumber_dana", sumberDanaId);
+    if (!sumberDana) throw new Error("❌ Sumber dana tidak ditemukan.");
 
-    await runTransaction(db, async (transaction) => {
-      const sumberDanaSnap = await transaction.get(sumberDanaRef);
+    // Validasi bahwa entitasId sumber dana sesuai dengan milik pengguna
+    if (sumberDana.entitasId !== user.entitasId) {
+      throw new Error("❌ Anda tidak memiliki akses ke entitas ini.");
+    }
 
-      if (!sumberDanaSnap.exists()) {
-        throw new Error("❌ Sumber dana tidak ditemukan.");
-      }
+    // Tidak bisa mengubah 'Uang Kas' menjadi nama lain
+    if (sumberDana.sumberDana.toLowerCase() === "uang kas" && 
+        data.sumberDana && data.sumberDana.toLowerCase() !== "uang kas") {
+      throw new Error("❌ 'Uang Kas' tidak dapat diubah menjadi nama lain!");
+    }
 
-      const sumberDanaData = sumberDanaSnap.data();
-      if (sumberDanaData.entitasId !== user.entitasId) {
-        throw new Error("❌ Anda tidak memiliki akses ke entitas ini.");
-      }
+    const updateData = {
+      sumberDana: data.sumberDana ? data.sumberDana.trim() : sumberDana.sumberDana,
+      kategori: data.kategori ? data.kategori.trim() : sumberDana.kategori,
+      saldo: data.saldo !== undefined ? Number(data.saldo) : sumberDana.saldo,
+      updatedAt: serverTimestamp(),
+    };
 
-      if (sumberDanaData.sumberDana.toLowerCase() === "uang kas" && 
-          data.sumberDana && data.sumberDana.toLowerCase() !== "uang kas") {
-        throw new Error("❌ 'Uang Kas' tidak dapat diubah menjadi nama lain!");
-      }
-
-      const updateData = {
-        sumberDana: data.sumberDana ? data.sumberDana.trim() : sumberDanaData.sumberDana,
-        kategori: data.kategori ? data.kategori.trim() : sumberDanaData.kategori,
-        saldo: data.saldo !== undefined ? Number(data.saldo) : sumberDanaData.saldo,
-        updatedAt: serverTimestamp(),
-      };
-
-      transaction.update(sumberDanaRef, updateData);
-    });
-
+    // Melakukan pembaruan data sumber dana
+    await updateDocData("sumber_dana", sumberDanaId, updateData);
     console.log("✅ Sumber dana berhasil diperbarui.");
     return true;
   } catch (error) {
     console.error("❌ Gagal memperbarui sumber dana:", error);
-    throw error;
-  }
-};
-
-/**
- * Mengambil sumber dana berdasarkan entitas ID
- */
-export const getSumberDana = async (entitasId) => {
-  const sumberDanaRef = collection(db, "sumber_dana");
-  const q = query(sumberDanaRef, where("entitasId", "==", entitasId));
-
-  try {
-    const querySnapshot = await getDocs(q);
-    const sumberDanaList = querySnapshot.docs.map(doc => doc.data());
-    return sumberDanaList;
-  } catch (error) {
-    console.error("❌ Error mengambil sumber dana:", error);
     throw error;
   }
 };

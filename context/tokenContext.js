@@ -1,43 +1,49 @@
-import { createContext, useState, useEffect } from "react";
-import { getUserData, getTokenFromIndexedDB } from "../services/indexedDBService";
+import { createContext, useEffect, useState } from "react";
+import { doc, onSnapshot } from "firebase/firestore";
+import { db } from "../lib/firebaseConfig";
+import { getUserData } from "../services/indexedDBService";
 
 export const TokenContext = createContext();
 
 export const TokenProvider = ({ children }) => {
   const [totalToken, setTotalToken] = useState(0);
-  const [entitasId, setEntitasId] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  // Ambil token saat context dimuat
   useEffect(() => {
-    const fetchToken = async () => {
-      setLoading(true);
+    let unsubscribe;
+
+    const listenToToken = async () => {
       try {
-        const userData = await getUserData();
-        if (!userData) {
-          console.error("❌ Pengguna belum login.");
+        const user = await getUserData();
+        if (!user?.entitasId) {
+          console.warn("⚠️ Tidak ditemukan entitasId di IndexedDB.");
+          setLoading(false);
           return;
         }
 
-        const fetchedEntitasId = userData.entitasId;
-        setEntitasId(fetchedEntitasId);
+        const tokenRef = doc(db, "token", user.entitasId);
 
-        if (fetchedEntitasId) {
-          const tokenData = await getTokenFromIndexedDB(fetchedEntitasId);
-          if (tokenData?.totalToken != null) {
-            setTotalToken(tokenData.totalToken);
+        unsubscribe = onSnapshot(tokenRef, (snapshot) => {
+          if (snapshot.exists()) {
+            const data = snapshot.data();
+            setTotalToken(data.totalToken ?? 0);
           } else {
-            console.warn("⚠️ Token belum tersedia di IndexedDB.");
+            console.warn("⚠️ Dokumen token tidak ditemukan.");
+            setTotalToken(0);
           }
-        }
-      } catch (error) {
-        console.error("❌ Gagal mengambil data token:", error);
-      } finally {
+          setLoading(false);
+        });
+      } catch (err) {
+        console.error("❌ Gagal menyambungkan listener token:", err);
         setLoading(false);
       }
     };
 
-    fetchToken();
+    listenToToken();
+
+    return () => {
+      if (unsubscribe) unsubscribe(); // ✅ Unsubscribe saat komponen unmount
+    };
   }, []);
 
   return (

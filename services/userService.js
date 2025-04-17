@@ -1,8 +1,8 @@
-import { db } from "./firebaseConfig.js";
+import { auth, db } from "../lib/firebaseConfig";
 import { 
-    collection, getDocs, addDoc, updateDoc, doc, deleteDoc, setDoc, getDoc 
+    collection, getDocs, addDoc, updateDoc, doc, deleteDoc, setDoc, getDoc, query, where
 } from "firebase/firestore";
-import { saveUserData, getUserData, removeUserData } from "../services/indexedDBService";
+import { saveUserData, getUserData, removeUserData } from "./indexedDBService";
 
 // Koleksi Firestore "users"
 const usersCollection = collection(db, "users");
@@ -21,14 +21,32 @@ export const getUserFromIndexedDB = async () => {
 
 // Fungsi untuk mengambil semua user
 export const getUsers = async () => {
-    try {
-        console.log("Fetching users...");
-        const querySnapshot = await getDocs(usersCollection);
-        return querySnapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
-    } catch (error) {
-        console.error("Error fetching users:", error);
-        return [];
+  try {
+    const currentUser = auth.currentUser;
+    if (!currentUser) {
+      throw new Error("❌ User belum login!");
     }
+
+    // 1. Fetch profil user untuk dapatkan entitasId
+    const profileSnap = await getDoc(doc(db, "users", currentUser.uid));
+    if (!profileSnap.exists()) {
+      throw new Error("❌ Profil user tidak ditemukan di Firestore!");
+    }
+    const { entitasId } = profileSnap.data();
+
+    // 2. Query semua user di entitas yang sama
+    const q = query(
+      collection(db, "users"),
+      where("entitasId", "==", entitasId)
+    );
+    const querySnapshot = await getDocs(q);
+
+    // 3. Kembalikan daftar user
+    return querySnapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+  } catch (error) {
+    console.error("Error fetching users:", error);
+    return [];
+  }
 };
 
 // Fungsi untuk menambahkan user baru

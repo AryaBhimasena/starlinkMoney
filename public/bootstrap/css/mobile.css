@@ -1089,3 +1089,85 @@ form input {
   font-weight: bold;
   border-bottom: 1px solid #ddd;
 }
+
+/* === Container utama === */
+.mutasi-form-wrapper {
+  max-width: 390px;  /* Sesuaikan dengan ukuran container */
+  margin: 0 auto;
+  height: auto;  /* Pastikan form cukup tinggi */
+  background-color: #ffffff;
+  box-shadow: 0 0 12px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+  border-radius: 12px;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  padding: 1rem;
+  font-family: 'Segoe UI', sans-serif;
+  padding-bottom: 50px;
+}
+
+/* === Label === */
+.mutasi-label {
+  display: block;
+  font-weight: 600;
+  margin-bottom: 4px;
+  margin-top: 12px;
+  font-size: 0.95rem;
+  color: #2c3e50;
+  text-align: left;
+}
+
+/* === Select Dropdown === */
+.mutasi-select {
+  width: 100%;
+  margin-bottom: 8px;
+  font-size: 0.95rem;
+  padding: 8px;
+  border-radius: 6px;
+  border: 1px solid #ccc;  /* Tambahkan border untuk visualisasi */
+  box-sizing: border-box;  /* Pastikan padding tidak mengganggu lebar */
+}
+
+/* === Input Amount === */
+.mutasi-input {
+  width: 100%;
+  font-size: 0.95rem;
+  padding: 8px;
+  border-radius: 6px;
+  border: 1px solid #ccc;  /* Border seperti input select */
+  box-sizing: border-box;  /* Pastikan padding tidak mengganggu lebar */
+  text-align: right;  /* Agar angka lebih rapi */
+  background-color: #f9f9f9;  /* Background input agar sedikit kontras */
+}
+
+/* === Tombol Mutasi === */
+.mutasi-saldo-btn {
+  margin-top: 16px;
+  padding: 10px 20px;
+  background-color: #27ae60;  /* Hijau seperti tombol mutasi */
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-weight: bold;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.mutasi-saldo-btn:hover {
+  background-color: #2ecc71;  /* Warna hijau lebih terang saat hover */
+}
+
+.is-invalid {
+  border-color: red;
+}
+
+.is-invalid:focus {
+  box-shadow: 0 0 0 0.2rem rgba(255, 0, 0, 0.25);
+}
+
+.is-invalid ~ .invalid-feedback {
+  display: block;
+  color: red;
+}

@@ -5,14 +5,7 @@ import { useRouter } from "next/navigation";
 import { signInWithEmailAndPassword } from "firebase/auth";
 import { auth } from "../lib/firebaseConfig";
 import Cookies from "js-cookie";
-import {
-  clearIndexedDB,
-  saveUserData,
-  syncUserData,
-  rekonsiliasiData,
-  getUserData,
-  fetchAndSaveTokenData,
-} from "../services/indexedDBService";
+import { clearIndexedDB, saveUserData } from "../services/indexedDBService";
 import Image from "next/image";
 
 export default function LoginPage() {
@@ -29,18 +22,6 @@ export default function LoginPage() {
     setCurrentSlide((prev) => (prev + 1) % 3); // 3 slides
   };
 
-useEffect(() => {
-    const isMobile = window.innerWidth <= 768;
-    const isMainDomain = window.location.hostname === 'starlinkmoney.vercel.app';
-    const isAlreadyOnMobile = window.location.hostname === 'm-starlinkmoney.vercel.app';
-
-    if (isMobile && isMainDomain && !isAlreadyOnMobile) {
-      window.location.replace('https://m-starlinkmoney.vercel.app/m');
-    }
-  }, []);
-
-  return null; // 👈 ini penting, jangan render apapun
-  
   useEffect(() => {
     const cssPath = "/bootstrap/css/custom.css";
     if (!document.querySelector(`link[href="${cssPath}"]`)) {
@@ -80,17 +61,6 @@ useEffect(() => {
 
       await saveUserData(userCredential.user.uid);
       console.log("✅ Data pengguna berhasil disimpan di IndexedDB");
-
-      await syncUserData();
-      console.log("✅ Sinkronisasi data pengguna selesai!");
-
-      const userData = await getUserData();
-      const entitasId = userData?.entitasId;
-      if (!entitasId) throw new Error("entitasId tidak ditemukan");
-
-      await fetchAndSaveTokenData(entitasId);
-      await rekonsiliasiData();
-      console.log("✅ Rekonsiliasi saldo selesai!");
 
       router.push("/dashboard");
     } catch (err) {

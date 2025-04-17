@@ -15,12 +15,14 @@ const SaldoCard = () => {
                 </thead>
                 <tbody>
                     {saldo.length > 0 ? (
-                        saldo.map(({ id, sumberDana, saldo }) => (
-                            <tr key={id}>
-                                <td>{sumberDana}</td>
-                                <td>Rp {saldo.toLocaleString("id-ID")}</td>
-                            </tr>
-                        ))
+                        saldo.map(({ id, sumberDana, saldo: nominalSaldo }) => {
+                            return (
+                                <tr key={id}>
+                                    <td>{sumberDana}</td>
+                                    <td>Rp {nominalSaldo.toLocaleString("id-ID")}</td>
+                                </tr>
+                            );
+                        })
                     ) : (
                         <tr>
                             <td colSpan="2" className="text-center">Saldo tidak tersedia</td>

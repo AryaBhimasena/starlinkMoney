@@ -1,12 +1,11 @@
 "use client";
+
 import { useEffect, useState } from "react";
-import {
-  getAllUserData,
-  getUserData,
-  addSingleUserData,
-  saveSingleUserData,
-  deleteUserData,
-} from "../../../../services/indexedDBService";
+import { getUsers, addUser, updateUser, deleteUser, getUserFromIndexedDB } from "../../../../services/userService";
+import { registerUser } from "../../../../services/registerService"; // Import registerUser dari registerService
+import { fetchSignInMethodsForEmail } from "firebase/auth";
+import { auth } from "../../../../lib/firebaseConfig";
+import Swal from "sweetalert2";
 
 export default function MobilePenggunaPage() {
   const [users, setUsers] = useState([]);
@@ -15,15 +14,25 @@ export default function MobilePenggunaPage() {
   const [selectedUser, setSelectedUser] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  
+  const isEmailAvailable = async (email) => {
+  const methods = await fetchSignInMethodsForEmail(auth, email);
+  return methods.length === 0; // true kalau belum terpakai
+};
 
   useEffect(() => {
-    fetchUsers();
     fetchCurrentUser();
   }, []);
 
+  useEffect(() => {
+    if (currentUser?.entitasId) {
+      fetchUsers(currentUser.entitasId);
+    }
+  }, [currentUser]);
+
   const fetchCurrentUser = async () => {
     try {
-      const userData = await getUserData();
+      const userData = await getUserFromIndexedDB();
       if (userData) {
         setCurrentUser({
           id: userData.id,
@@ -37,10 +46,10 @@ export default function MobilePenggunaPage() {
     }
   };
 
-  const fetchUsers = async () => {
+  const fetchUsers = async (entitasId) => {
     setIsLoading(true);
     try {
-      const data = await getAllUserData();
+      const data = await getUsers(entitasId);
       setUsers(data);
     } catch (err) {
       console.error("Gagal mengambil daftar pengguna:", err);
@@ -49,55 +58,135 @@ export default function MobilePenggunaPage() {
     }
   };
 
-  const handleSaveUser = async (userData) => {
-    setIsSaving(true);
-    try {
-      if (!userData.name || !userData.email || !userData.kontak || (!userData.id && !userData.password)) {
-        alert("Semua bidang harus diisi!");
-        setIsSaving(false);
-        return;
-      }
+const handleSaveUser = async (userData) => {
+  setIsSaving(true);
 
-      if (!currentUser || !currentUser.entitasId) {
-        alert("Gagal mendapatkan data entitas.");
-        setIsSaving(false);
-        return;
-      }
-
-      const formattedUserData = {
-        id: userData.id || "",
-        uid: userData.uid || "",
-        entitasId: currentUser.entitasId,
-        name: userData.name.trim(),
-        email: userData.email.trim(),
-        kontak: userData.kontak.trim(),
-        role: "admin",
-        foto: userData.foto?.trim() || "",
-        ...(userData.password ? { password: userData.password.trim() } : {}),
-      };
-
-      if (userData.id) {
-        await saveSingleUserData(formattedUserData);
-      } else {
-        await addSingleUserData(formattedUserData);
-      }
-
-      setShowModal(false);
-      setSelectedUser(null);
-      fetchUsers();
-    } catch (err) {
-      console.error("Gagal menyimpan:", err);
-      alert("Terjadi kesalahan saat menyimpan.");
-    } finally {
+  try {
+    // Validasi awal
+    if (!userData.name || !userData.email || !userData.kontak || (!userData.id && !userData.password)) {
+      alert("❗ Semua bidang harus diisi!");
       setIsSaving(false);
+      return;
     }
-  };
 
+    // Superadmin harus tersedia
+    const superadmin = currentUser;
+    if (!superadmin || !superadmin.entitasId) {
+      alert("❗ Gagal mendapatkan data entitas.");
+      setIsSaving(false);
+      return;
+    }
+
+    // Kalau user baru, cek email terlebih dahulu
+    if (!userData.id) {
+      const emailAvailable = await isEmailAvailable(userData.email.trim());
+      if (!emailAvailable) {
+        Swal.fire("Email sudah digunakan", "Silakan gunakan email lain.", "warning");
+        setIsSaving(false);
+        return;
+      }
+
+      // Tampilkan modal konfirmasi password superadmin
+      const { value: password } = await Swal.fire({
+        title: "Konfirmasi Password",
+        input: "password",
+        inputLabel: "Masukkan password akun Anda",
+        inputPlaceholder: "Password Anda",
+        inputAttributes: {
+          autocapitalize: "off",
+          autocorrect: "off",
+        },
+        showCancelButton: true,
+        confirmButtonText: "Lanjutkan",
+        cancelButtonText: "Batal",
+        preConfirm: (value) => {
+          if (!value) return Swal.showValidationMessage("Password wajib diisi!");
+        },
+      });
+
+      if (!password) {
+        setIsSaving(false);
+        return;
+      }
+
+      // Jalankan proses konfirmasi (register)
+      await handleKonfirmasiRegister(userData, password.trim(), {
+        fetchUsers,
+        setShowModal,
+        setSelectedUser,
+      });
+
+      return; // Selesai proses tambah user baru
+    }
+
+    // Proses update user lama
+    const finalUserData = {
+      id: userData.id,
+      uid: userData.id,
+      entitasId: superadmin.entitasId,
+      name: userData.name.trim(),
+      email: userData.email.trim(),
+      kontak: userData.kontak.trim(),
+      role: "admin",
+      foto: userData.foto?.trim() || "",
+    };
+
+    await updateUser(finalUserData.id, finalUserData);
+    await addUser(finalUserData);
+    setShowModal(false);
+    setSelectedUser(null);
+    fetchUsers(superadmin.entitasId);
+    console.log("🎉 Data pengguna berhasil diperbarui.");
+  } catch (err) {
+    console.error("❌ Gagal menyimpan:", err);
+    Swal.fire("Gagal", "Terjadi kesalahan saat menyimpan data.", "error");
+  } finally {
+    setIsSaving(false);
+  }
+};
+  
+  const handleKonfirmasiRegister = async (formData, passwordSuperadmin, uiHandlers) => {
+  const { fetchUsers, setShowModal, setSelectedUser } = uiHandlers;
+
+  try {
+    // Simpan password ke sessionStorage
+    sessionStorage.setItem("adminPassword", passwordSuperadmin);
+
+    // Jalankan registerUser
+    const { user, userData: registeredData } = await registerUser(
+      formData.email.trim(),
+      formData.password.trim(),
+      formData.name.trim()
+    );
+
+    const newUserId = user.uid;
+    const finalUserData = {
+      ...registeredData,
+      id: newUserId,
+      uid: newUserId,
+      kontak: formData.kontak.trim(),
+      foto: formData.foto?.trim() || "",
+    };
+
+    // Sukses, refresh UI
+    setShowModal(false);
+    setSelectedUser(null);
+    await fetchUsers(registeredData.entitasId);
+
+    Swal.fire("Berhasil", "Admin baru berhasil ditambahkan.", "success");
+  } catch (err) {
+    console.error("❌ Gagal mendaftarkan admin:", err);
+    Swal.fire("Gagal", err.message || "Terjadi kesalahan saat pendaftaran.", "error");
+  } finally {
+    sessionStorage.removeItem("adminPassword");
+  }
+};
+  
   const handleDeleteUser = async (userId) => {
     if (!confirm("Yakin ingin menghapus pengguna ini?")) return;
     try {
-      await deleteUserData(userId);
-      fetchUsers();
+      await deleteUser(userId);
+      fetchUsers(currentUser.entitasId);
     } catch (err) {
       console.error("Gagal menghapus:", err);
       alert("Terjadi kesalahan saat menghapus pengguna.");

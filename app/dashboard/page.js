@@ -10,14 +10,14 @@ import {
   ResponsiveContainer,
 } from "recharts";
 import { useEffect, useState } from "react";
-
 import {
-  getJumlahTransaksi,
-  getTotalOmzet,
-  getTotalProfit,
-  getTotalSaldo,
-  getTransaksiHarian,
-} from "../../services/indexedDBService";
+  collection,
+  getDocs,
+  query,
+  where,
+} from "firebase/firestore";
+import { db } from "../../lib/firebaseConfig";
+import { getUserData } from "../../services/indexedDBService";
 
 // Format rupiah helper
 const formatRupiah = (angka) => {
@@ -38,32 +38,75 @@ export default function HomePage() {
   useEffect(() => {
     const fetchDashboardData = async () => {
       try {
-        const transaksiCount = await getJumlahTransaksi();
-        setJumlahTransaksi(transaksiCount);
+        const userData = await getUserData();
+        const entitasId = userData?.entitasId;
+        console.log("Entitas ID yang diambil:", entitasId);  // Log entitasId
 
-        const omzet = await getTotalOmzet();
-        setTotalOmzet(omzet);
+        if (!entitasId) return;
 
-        const profit = await getTotalProfit();
-        setTotalProfit(profit);
+        const today = new Date().toISOString().split("T")[0];  // Mendapatkan tanggal hari ini (yyyy-mm-dd)
 
-        const saldo = await getTotalSaldo();
-        setTotalSaldo(saldo);
+        // Ambil semua transaksi berdasarkan entitasId
+        const transaksiRef = collection(db, "transaksi");
+        const transaksiQuery = query(transaksiRef, where("entitasId", "==", entitasId));
+        const transaksiSnap = await getDocs(transaksiQuery);
 
-        const data = await getTransaksiHarian();
+        let totalTransaksi = 0;
+        let omzet = 0;
+        let profit = 0;
+        const transaksiByDate = {};
 
-        // Perbaikan: pastikan setiap item memiliki nilai profit
-        const cleanData = data.map((item) => {
-          const calculatedProfit =
-            parseInt(item.hargaJual || 0) - parseInt(item.hargaModal || 0);
+        transaksiSnap.forEach((doc) => {
+          const data = doc.data();
+          const nominal = parseInt(data.nominal || 0);
+          const hargaJual = parseInt(data.hargaJual || 0);
+          const hargaModal = parseInt(data.hargaModal || 0);
+          const tanggal = data.tanggal?.split("T")[0] || "Unknown";
 
-          return {
-            ...item,
-            profit: item.profit ?? (isNaN(calculatedProfit) ? 0 : calculatedProfit),
-          };
+          // Hanya mengambil transaksi pada hari ini
+          if (tanggal === today) {
+            totalTransaksi++;
+
+            // Omzet hanya dihitung dari Kas/Bank Masuk
+            if (["Kas Masuk", "Bank Masuk"].includes(data.jenisTransaksi)) {
+              omzet += nominal;
+            }
+
+            // Hitung profit
+            const itemProfit = hargaJual - hargaModal;
+            profit += isNaN(itemProfit) ? 0 : itemProfit;
+
+            // Hitung transaksi harian
+            if (!transaksiByDate[tanggal]) {
+              transaksiByDate[tanggal] = {
+                tanggal,
+                transaksi: 1,
+                profit: isNaN(itemProfit) ? 0 : itemProfit,
+              };
+            } else {
+              transaksiByDate[tanggal].transaksi += 1;
+              transaksiByDate[tanggal].profit += isNaN(itemProfit) ? 0 : itemProfit;
+            }
+          }
         });
 
-        setDataHarian(cleanData);
+        setJumlahTransaksi(totalTransaksi);
+        setTotalOmzet(omzet);
+        setTotalProfit(profit);
+        setDataHarian(Object.values(transaksiByDate));
+
+        // Ambil semua saldo berdasarkan entitasId
+        const saldoRef = collection(db, "saldo");
+        const saldoQuery = query(saldoRef, where("entitasId", "==", entitasId));
+        const saldoSnap = await getDocs(saldoQuery);
+
+        let totalSaldoAll = 0;
+        saldoSnap.forEach((doc) => {
+          const data = doc.data();
+          totalSaldoAll += parseInt(data.saldo || 0);
+        });
+
+        setTotalSaldo(totalSaldoAll);
       } catch (error) {
         console.error("Error fetching dashboard data:", error);
       }
@@ -85,7 +128,7 @@ export default function HomePage() {
           <div className="col-md-3">
             <div className="card shadow-sm p-3 text-center card-content">
               <div className="card-header">
-                <h5>Total Transaksi</h5>
+                <h5>Transaksi Hari Ini</h5>
               </div>
               <div className="card-body">
                 <p className="text-primary fw-bold">
@@ -98,7 +141,7 @@ export default function HomePage() {
           <div className="col-md-3">
             <div className="card shadow-sm p-3 text-center card-content">
               <div className="card-header">
-                <h5>Total Omzet</h5>
+                <h5>Omzet Hari Ini</h5>
               </div>
               <div className="card-body">
                 <p className="text-success fw-bold">
@@ -111,7 +154,7 @@ export default function HomePage() {
           <div className="col-md-3">
             <div className="card shadow-sm p-3 text-center card-content">
               <div className="card-header">
-                <h5>Total Profit</h5>
+                <h5>Profit Hari Ini</h5>
               </div>
               <div className="card-body">
                 <p className="text-success fw-bold">
@@ -147,6 +190,10 @@ export default function HomePage() {
                     interval={1}
                     tick={{ fontSize: 11 }}
                     tickLine={false}
+                    tickFormatter={(tick) => {
+                      const date = new Date(tick);
+                      return `${date.getDate()}-${date.getMonth() + 1}`;
+                    }}
                   />
                   <YAxis />
                   <Tooltip />
@@ -167,6 +214,10 @@ export default function HomePage() {
                     interval={1}
                     tick={{ fontSize: 11 }}
                     tickLine={false}
+                    tickFormatter={(tick) => {
+                      const date = new Date(tick);
+                      return `${date.getDate()}-${date.getMonth() + 1}`;
+                    }}
                   />
                   <YAxis />
                   <Tooltip formatter={(value) => formatRupiah(value)} />
