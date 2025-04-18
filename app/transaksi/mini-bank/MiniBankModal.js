@@ -106,7 +106,8 @@ export default function MiniBankModal({ show, onClose }) {
       if (!uangKas) throw new Error("Uang Kas tidak ditemukan.");
       if (form.nominal > uangKas.saldo) throw new Error("Saldo Uang Kas tidak cukup.");
     } else {
-      // Jika bukan Tarik Tunai, cek sumber dana yang dipilih
+      
+	  // Jika bukan Tarik Tunai, cek sumber dana yang dipilih
       const sumber = saldoList.find((s) => s.id === form.sumberDana);
       if (!sumber) throw new Error("Sumber Dana tidak ditemukan.");
       if (form.nominal > sumber.saldo) throw new Error("Saldo tidak cukup.");

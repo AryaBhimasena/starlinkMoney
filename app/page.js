@@ -32,7 +32,7 @@ export default function LoginPage() {
       console.log("✅ Custom CSS berhasil dimuat:", cssPath);
     }
   }, []);
-
+  
   useEffect(() => {
     if (paused) return;
     const interval = setInterval(() => {
@@ -47,6 +47,7 @@ export default function LoginPage() {
 
     try {
       Cookies.remove("token");
+	  sessionStorage.clear();
       await clearIndexedDB();
       console.log("IndexedDB cleared successfully");
 

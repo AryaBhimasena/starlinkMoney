@@ -10,6 +10,7 @@ import {
   Timestamp,
 } from "firebase/firestore";
 import { getUserData } from "../../../services/indexedDBService";
+import ModalPromo from "../../../components/ModalPenawaran";
 
 const formatRupiah = (angka) => {
   return new Intl.NumberFormat("id-ID", {
@@ -26,6 +27,7 @@ export default function HomePage() {
   const [totalSaldo, setTotalSaldo] = useState(0);
   const [dataHarian, setDataHarian] = useState([]);
   const [selectedIndex, setSelectedIndex] = useState(null);
+  const [showPromo, setShowPromo] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
 
@@ -109,9 +111,21 @@ export default function HomePage() {
     document.addEventListener("click", handleClickOutside);
     return () => document.removeEventListener("click", handleClickOutside);
   }, []);
+  
+    useEffect(() => {
+    const hasSeenPromo = sessionStorage.getItem("hasSeenPromoModal");
+    if (!hasSeenPromo) {
+      setShowPromo(true);
+      sessionStorage.setItem("hasSeenPromoModal", "true");
+    }
+  }, []);
+
 
   return (
+	
+	
     <div className="mobile-scroll-area" ref={containerRef}>
+	{showPromo && <ModalPromo onClose={() => setShowPromo(false)} />}
       <div className="mobile-dashboard-header mb-4">
         <h4 className="welcome-text">Transaksi Hari Ini</h4>
       </div>

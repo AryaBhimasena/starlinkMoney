@@ -8,7 +8,7 @@ import { doc, setDoc } from "firebase/firestore";
 import { auth, db } from "../lib/firebaseConfig";
 import { getUserData } from "./indexedDBService";
 
-export const registerUser = async (email, password, name) => {
+export const registerUser = async (email, password, name, kontak) => {
   let userCredential = null;
 
   try {
@@ -42,6 +42,7 @@ export const registerUser = async (email, password, name) => {
       name,
       email,
       role: "admin",
+	  kontak,
       entitasId: currentUser.entitasId,  // Mengambil entitasId dari data superadmin
       createdAt: new Date(),
     };

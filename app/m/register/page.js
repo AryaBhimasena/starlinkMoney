@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Swal from 'sweetalert2';  // Import SweetAlert2
 import { newRegisterUser } from '../../../services/registerService';
-import { db } from '../../../firebase';  // Pastikan db sudah dikonfigurasi dengan Firebase SDK
+import { db } from '../../../lib/firebaseConfig';  // Pastikan db sudah dikonfigurasi dengan Firebase SDK
 import { collection, doc, setDoc } from 'firebase/firestore';  // Import firestore functions
 
 export default function MobileRegisterPage() {

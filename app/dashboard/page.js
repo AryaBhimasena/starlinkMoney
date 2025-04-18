@@ -8,18 +8,13 @@ import {
   Tooltip,
   CartesianGrid,
   ResponsiveContainer,
+  LabelList,
 } from "recharts";
-import { useEffect, useState } from "react";
-import {
-  collection,
-  getDocs,
-  query,
-  where,
-} from "firebase/firestore";
-import { db } from "../../lib/firebaseConfig";
-import { getUserData } from "../../services/indexedDBService";
+import { useEffect, useState, useContext } from "react";
+import { TransaksiContext } from "../../context/TransaksiContext";
+import { SaldoContext } from "../../context/SaldoContext"; // Pastikan kamu sudah buat ini
+import ModalPromo from "../../components/ModalPenawaran";
 
-// Format rupiah helper
 const formatRupiah = (angka) => {
   return new Intl.NumberFormat("id-ID", {
     style: "currency",
@@ -29,94 +24,111 @@ const formatRupiah = (angka) => {
 };
 
 export default function HomePage() {
+  const { transaksi } = useContext(TransaksiContext);
+  const { saldo } = useContext(SaldoContext);
+
   const [jumlahTransaksi, setJumlahTransaksi] = useState(0);
   const [totalOmzet, setTotalOmzet] = useState(0);
   const [totalProfit, setTotalProfit] = useState(0);
   const [totalSaldo, setTotalSaldo] = useState(0);
   const [dataHarian, setDataHarian] = useState([]);
+  const [showPromo, setShowPromo] = useState(false);
 
   useEffect(() => {
-    const fetchDashboardData = async () => {
-      try {
-        const userData = await getUserData();
-        const entitasId = userData?.entitasId;
-        console.log("Entitas ID yang diambil:", entitasId);  // Log entitasId
+    const hasSeenPromo = sessionStorage.getItem("hasSeenPromoModal");
+    if (!hasSeenPromo) {
+      setShowPromo(true);
+      sessionStorage.setItem("hasSeenPromoModal", "true");
+    }
+  }, []);
 
-        if (!entitasId) return;
+  useEffect(() => {
+    if (!transaksi || transaksi.length === 0) return;
 
-        const today = new Date().toISOString().split("T")[0];  // Mendapatkan tanggal hari ini (yyyy-mm-dd)
+    const today = new Date();
+    const year = today.getFullYear();
+    const month = today.getMonth();
+    const tanggalHariIni = today.toISOString().split("T")[0]; // yyyy-mm-dd
 
-        // Ambil semua transaksi berdasarkan entitasId
-        const transaksiRef = collection(db, "transaksi");
-        const transaksiQuery = query(transaksiRef, where("entitasId", "==", entitasId));
-        const transaksiSnap = await getDocs(transaksiQuery);
+    let totalTransaksiHariIni = 0;
+    let omzetHariIni = 0;
+    let profitHariIni = 0;
 
-        let totalTransaksi = 0;
-        let omzet = 0;
-        let profit = 0;
-        const transaksiByDate = {};
-
-        transaksiSnap.forEach((doc) => {
-          const data = doc.data();
-          const nominal = parseInt(data.nominal || 0);
-          const hargaJual = parseInt(data.hargaJual || 0);
-          const hargaModal = parseInt(data.hargaModal || 0);
-          const tanggal = data.tanggal?.split("T")[0] || "Unknown";
-
-          // Hanya mengambil transaksi pada hari ini
-          if (tanggal === today) {
-            totalTransaksi++;
-
-            // Omzet hanya dihitung dari Kas/Bank Masuk
-            if (["Kas Masuk", "Bank Masuk"].includes(data.jenisTransaksi)) {
-              omzet += nominal;
-            }
-
-            // Hitung profit
-            const itemProfit = hargaJual - hargaModal;
-            profit += isNaN(itemProfit) ? 0 : itemProfit;
-
-            // Hitung transaksi harian
-            if (!transaksiByDate[tanggal]) {
-              transaksiByDate[tanggal] = {
-                tanggal,
-                transaksi: 1,
-                profit: isNaN(itemProfit) ? 0 : itemProfit,
-              };
-            } else {
-              transaksiByDate[tanggal].transaksi += 1;
-              transaksiByDate[tanggal].profit += isNaN(itemProfit) ? 0 : itemProfit;
-            }
-          }
-        });
-
-        setJumlahTransaksi(totalTransaksi);
-        setTotalOmzet(omzet);
-        setTotalProfit(profit);
-        setDataHarian(Object.values(transaksiByDate));
-
-        // Ambil semua saldo berdasarkan entitasId
-        const saldoRef = collection(db, "saldo");
-        const saldoQuery = query(saldoRef, where("entitasId", "==", entitasId));
-        const saldoSnap = await getDocs(saldoQuery);
-
-        let totalSaldoAll = 0;
-        saldoSnap.forEach((doc) => {
-          const data = doc.data();
-          totalSaldoAll += parseInt(data.saldo || 0);
-        });
-
-        setTotalSaldo(totalSaldoAll);
-      } catch (error) {
-        console.error("Error fetching dashboard data:", error);
-      }
+    const transaksiByDate = {}; // key: dd-mm
+    const formatTanggalKey = (dateObj) => {
+      const dd = String(dateObj.getDate()).padStart(2, "0");
+      const mm = String(dateObj.getMonth() + 1).padStart(2, "0");
+      return `${dd}-${mm}`;
     };
 
-    fetchDashboardData();
-  }, []);
+    transaksi.forEach((data) => {
+      const createdAt = data.createdAt?.toDate?.();
+      if (!createdAt) return;
+
+      const tanggalKey = formatTanggalKey(createdAt);
+      const tanggalString = createdAt.toISOString().split("T")[0];
+
+      const nominal = parseInt(data.nominal || 0);
+      const hargaJual = parseInt(data.hargaJual || 0);
+      const hargaModal = parseInt(data.hargaModal || 0);
+      const tarif = parseInt(data.tarif || 0);
+
+      const itemProfit = hargaJual - hargaModal;
+      const finalProfit = isNaN(itemProfit) ? tarif : itemProfit;
+
+      // == Untuk Card Hari Ini ==
+      if (tanggalString === tanggalHariIni) {
+        totalTransaksiHariIni++;
+        omzetHariIni += nominal + finalProfit;
+        profitHariIni += finalProfit;
+      }
+
+      // == Untuk Grafik Bulanan ==
+      if (!transaksiByDate[tanggalKey]) {
+        transaksiByDate[tanggalKey] = {
+          transaksi: 1,
+          profit: finalProfit,
+        };
+      } else {
+        transaksiByDate[tanggalKey].transaksi += 1;
+        transaksiByDate[tanggalKey].profit += finalProfit;
+      }
+    });
+
+    // Buat array lengkap semua tanggal di bulan aktif (dd-mm)
+    const daysInMonth = new Date(year, month + 1, 0).getDate();
+    const fullTanggalArray = Array.from({ length: daysInMonth }, (_, i) => {
+      const dateObj = new Date(year, month, i + 1);
+      return formatTanggalKey(dateObj);
+    });
+
+    // Gabungkan data harian agar semua tanggal tetap tampil meski 0
+    const completeData = fullTanggalArray.map((tgl) => {
+      const found = transaksiByDate[tgl];
+      return {
+        tanggal: tgl,
+        transaksi: found?.transaksi || 0,
+        profit: found?.profit || 0,
+      };
+    });
+
+    setDataHarian(completeData);
+    setJumlahTransaksi(totalTransaksiHariIni);
+    setTotalOmzet(omzetHariIni);
+    setTotalProfit(profitHariIni);
+  }, [transaksi]);
+
+  useEffect(() => {
+    if (!saldo || saldo.length === 0) return;
+    const total = saldo.reduce((acc, curr) => acc + parseInt(curr.saldo || 0), 0);
+    setTotalSaldo(total);
+  }, [saldo]);
 
   return (
     <>
+	
+	{showPromo && <ModalPromo onClose={() => setShowPromo(false)} />}
+    
       {/* Header Full Width */}
       <div className="header-container">
         <h3 className="header mb-0">Selamat Datang Kembali...</h3>
@@ -185,16 +197,23 @@ export default function HomePage() {
               <h5 className="mb-3">Transaksi Bulan Ini</h5>
               <ResponsiveContainer width="100%" height={300}>
                 <BarChart data={dataHarian}>
-                  <XAxis
-                    dataKey="tanggal"
-                    interval={1}
-                    tick={{ fontSize: 11 }}
-                    tickLine={false}
-                    tickFormatter={(tick) => {
-                      const date = new Date(tick);
-                      return `${date.getDate()}-${date.getMonth() + 1}`;
-                    }}
-                  />
+					<XAxis
+					  dataKey="tanggal"
+					  interval={0}
+					  tick={({ x, y, payload }) => {
+						const [dd, mm] = payload.value.split("-");
+						const dayNum = parseInt(dd);
+						if (dayNum % 2 === 1) {
+						  return (
+							<text x={x} y={y + 10} fontSize={11} textAnchor="middle">
+							  {dd}-{mm}
+							</text>
+						  );
+						}
+						return null;
+					  }}
+					  tickLine={false}
+					/>
                   <YAxis />
                   <Tooltip />
                   <CartesianGrid stroke="#eee" strokeDasharray="5 5" />
@@ -209,16 +228,23 @@ export default function HomePage() {
               <h5 className="mb-3">Profit Bulan Ini</h5>
               <ResponsiveContainer width="100%" height={300}>
                 <BarChart data={dataHarian}>
-                  <XAxis
-                    dataKey="tanggal"
-                    interval={1}
-                    tick={{ fontSize: 11 }}
-                    tickLine={false}
-                    tickFormatter={(tick) => {
-                      const date = new Date(tick);
-                      return `${date.getDate()}-${date.getMonth() + 1}`;
-                    }}
-                  />
+					<XAxis
+					  dataKey="tanggal"
+					  interval={0}
+					  tick={({ x, y, payload }) => {
+						const [dd, mm] = payload.value.split("-");
+						const dayNum = parseInt(dd);
+						if (dayNum % 2 === 1) {
+						  return (
+							<text x={x} y={y + 10} fontSize={11} textAnchor="middle">
+							  {dd}-{mm}
+							</text>
+						  );
+						}
+						return null;
+					  }}
+					  tickLine={false}
+					/>
                   <YAxis />
                   <Tooltip formatter={(value) => formatRupiah(value)} />
                   <CartesianGrid stroke="#eee" strokeDasharray="5 5" />

@@ -66,6 +66,7 @@ export default function NavbarMobile() {
   }, []);
 
   const handleLogout = () => {
+	sessionStorage.clear();
     indexedDB.deleteDatabase("StarlinkDB");
     router.replace("/m");
   };

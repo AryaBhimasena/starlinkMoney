@@ -84,6 +84,9 @@ export default function TopUpPulsaModal({ show, onClose }) {
       if (!sumber) throw new Error("Sumber Dana tidak ditemukan.");
       if (form.hargaModal > sumber.saldo) throw new Error("Saldo tidak cukup.");
 
+	  const uangKas = saldoList.find((s) => s.sumberDana.toLowerCase() === "uang kas");
+      if (!uangKas) throw new Error("Uang Kas tidak ditemukan.");
+
       const noReff = await generateNoReff(entitasId, form.jenisTransaksi);
 
       const data = {
@@ -95,11 +98,17 @@ export default function TopUpPulsaModal({ show, onClose }) {
       };
 
       const transaksi = await tambahTransaksi(data);
-      const { saldoBaruSumber, error: saldoError } = await hitungSaldo(saldoList, data);
-      if (saldoError) throw new Error(saldoError);
+	  const { saldoBaruSumber, saldoBaruUangKas, error } = await hitungSaldo(saldoList, data);
+      if (error) throw new Error(error);
+	  
+      if (form.sumberDana !== uangKas.id) {
+	  await updateSaldo(entitasId, form.sumberDana, saldoBaruSumber);
+	  await updateSaldoState(form.sumberDana, saldoBaruSumber);
+	  }
 
-      await updateSaldo(entitasId, sumber.id, saldoBaruSumber);
-      await updateSaldoState(sumber.id, saldoBaruSumber);
+	  await updateSaldo(entitasId, uangKas.id, saldoBaruUangKas);
+	  await updateSaldoState(uangKas.id, saldoBaruUangKas);
+
 
       Swal.fire("Berhasil", "Transaksi Top Up Pulsa berhasil disimpan", "success");
       onClose();

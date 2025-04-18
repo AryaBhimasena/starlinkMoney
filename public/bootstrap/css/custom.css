@@ -1626,3 +1626,347 @@ button[type="submit"]:disabled {
   font-weight: bold;
   color: #856404;
 }
+
+.pengguna-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.4);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1050;
+}
+
+.pengguna-modal-card {
+  background-color: #fff;
+  border-radius: 10px;
+  width: 100%;
+  max-width: 500px;
+  padding: 24px;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08);
+  animation: pengguna-modal-fade-in 0.3s ease-out;
+}
+
+@keyframes pengguna-modal-fade-in {
+  from {
+    transform: scale(0.95);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+.pengguna-modal-header h5 {
+  margin: 0 0 20px;
+  font-size: 18px;
+  font-weight: 600;
+  color: #333;
+}
+
+.pengguna-form-group {
+  margin-bottom: 16px;
+}
+
+.pengguna-form-label {
+  display: block;
+  font-size: 14px;
+  color: #444;
+  margin-bottom: 6px;
+}
+
+.pengguna-form-control {
+  width: 100%;
+  padding: 10px 12px;
+  font-size: 14px;
+  background-color: #f9f9f9;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  transition: border-color 0.3s ease;
+}
+
+.pengguna-form-control:focus {
+  outline: none;
+  background-color: #fff;
+  border-color: #007bff;
+}
+
+.pengguna-modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 20px;
+}
+
+.pengguna-btn {
+  padding: 10px 16px;
+  font-size: 14px;
+  border-radius: 6px;
+  cursor: pointer;
+  border: none;
+  transition: background-color 0.3s ease;
+}
+
+.pengguna-btn-primary {
+  background-color: #007bff;
+  color: white;
+}
+
+.pengguna-btn-primary:hover {
+  background-color: #0056b3;
+}
+
+.pengguna-btn-secondary {
+  background-color: #6c757d;
+  color: white;
+}
+
+.pengguna-btn-secondary:hover {
+  background-color: #5a6268;
+}
+
+/* container full-screen, center align */
+.poster-container {
+  width: 100vw;
+  height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #eee;
+}
+
+/* Modal overlay */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background-color: rgba(0, 0, 0, 0.4); /* transparan hitam */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999; /* pastikan di atas segalanya */
+}
+
+.poster {
+  width: 400px;
+  height: 600px;
+  background: white;
+  border: 4px solid black;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  position: relative;
+}
+
+/* Section structure: Header, Body, Footer */
+.poster-section {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 12px;
+  box-sizing: border-box;
+}
+
+/* === HEADER === */
+.poster-header {
+  height: 25%;
+  padding: 0 12px;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end; /* fix posisi vertical */
+  width:90%;
+  margin-top:10%;
+}
+
+.countdown-box {
+  display: flex;
+  align-items: center;
+  font-size: 26px;
+  font-weight: bold;
+  color: #000;
+  gap: 6px;
+}
+
+/* === Top speech box === */
+.speech-box.top {
+  position: relative;
+  background: black;
+  color: white;
+  padding: 10px;
+  font-size: 26px;
+  max-width: 160px;
+  align-self: flex-end;
+  margin:0;
+}
+
+.top-triangle {
+  position: absolute;
+  bottom: -10px;
+  right: 20px;
+  width: 0;
+  height: 0;
+  border-left: 10px solid transparent;
+  border-right: 10px solid transparent;
+  border-top: 10px solid black;
+}
+
+/* === BODY === */
+.poster-body {
+  height: 60%;
+  padding: 0;
+}
+
+.poster-speech-box.main.full-body {
+  position: relative;
+  background: black;
+  color: white;
+  width: 90%;
+  height: 100%;
+  padding: 20px;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+}
+
+.poster-main-grid {
+  display: flex;
+  width: 100%;
+  height: 100%;
+}
+
+.poster-main-text {
+  flex: 0.3;
+  font-size: 50px;
+  font-weight: bold;
+  text-align: left;
+  text-transform: uppercase;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  line-height: 1;
+  padding-left: 10px;
+  box-sizing: border-box;
+}
+
+.poster-main-offer {
+  color: #fff;
+  background-color: #111; /* sedikit lebih terang dari full black */
+  padding: 12px 16px;
+  border-radius: 8px;
+  box-shadow: 0 0 10px rgba(255, 255, 255, 0.1);
+  font-family: 'Arial', sans-serif;
+  font-size: 26px;
+  text-align: left;
+  margin:auto;
+}
+
+.poster-offer-line {
+  margin: 0;
+  line-height: 1.6;
+  font-size: 16px;
+}
+
+.poster-offer-line .strikethrough {
+  text-decoration: line-through;
+  color: #f87171; /* merah soft */
+  margin-right: 6px;
+}
+
+.poster-offer-line strong {
+  color: #facc15; /* kuning terang */
+  font-size: 20px;
+  font-weight: 700;
+}
+
+.main-triangle {
+  position: absolute;
+  bottom: -10px;
+  left: 20px;
+  width: 0;
+  height: 0;
+  border-left: 10px solid transparent;
+  border-right: 10px solid transparent;
+  border-top: 10px solid black;
+}
+
+/* === FOOTER === */
+.poster-footer {
+  height: 15%;
+  padding: 0 12px;
+}
+
+.bottom-grid {
+  display: flex;
+  gap: 16px;
+  width: 100%;
+  height: 100%;
+  box-sizing: border-box;
+  align-items: center;
+  margin-top: 10px;
+}
+
+/* Merge kolom 1 & 2 jadi 1 kolom besar untuk tombol */
+.poster-column.double {
+  flex: 2;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.poster-column {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.poster-column.empty {
+  display: none; /* jika sudah merge, tidak dibutuhkan */
+}
+
+.poster-col-header {
+  font-size: 14px;
+  font-weight: bold;
+  margin-bottom: 4px;
+}
+
+.poster-col-body {
+  font-size: 11px;
+  line-height: 1.4;
+  color: #222;
+}
+
+/* === BUY BUTTON Stylish === */
+.buy-button {
+  background: transparent;
+  color: #000;
+  border: 2px solid #000;
+  padding: 6px 14px;
+  font-weight: bold;
+  font-size: 14px;
+  border-radius: 30px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.buy-button:hover {
+  background: #000;
+  color: #fff;
+}
+
+/* === CLOSE BUTTON === */
+.close-button {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  z-index: 10;
+}

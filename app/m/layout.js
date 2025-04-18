@@ -22,40 +22,31 @@ export default function MobileLayout({ children }) {
   const pathname = usePathname();
   const router = useRouter();
 
+  // Halaman yang boleh diakses tanpa login
   const isPublicPage = pathname === "/m" || pathname === "/m/register";
 
-  const [isBottomMenuOpen, setIsBottomMenuOpen] = useState(false);
   const [isCheckingAuth, setIsCheckingAuth] = useState(true);
+  const [isBottomMenuOpen, setIsBottomMenuOpen] = useState(false);
 
+  // Reset scroll ke top tiap navigasi
   useEffect(() => {
     window.scrollTo(0, 0);
   }, [pathname]);
 
+  // Cek login; kalau belum dan bukan public page → redirect ke /m
   useEffect(() => {
-    const checkLogin = async () => {
+    (async () => {
       const user = await getUserData();
-
-      // ❌ Jika tidak login, redirect ke homepage
-      if (!user) {
+      if (!user && !isPublicPage) {
         router.replace("/m");
-      }
-
-      // ✅ Jika akses langsung ke halaman public, biarkan
-      if (isPublicPage) {
-        setIsCheckingAuth(false);
         return;
       }
+      setIsCheckingAuth(false);
+    })();
+  }, [pathname, router, isPublicPage]);
 
-      // ✅ Jika user login dan berada di halaman lain, lanjut render
-      if (user && !isPublicPage) {
-        setIsCheckingAuth(false);
-      }
-    };
-
-    checkLogin();
-  }, [pathname, router]);
-
-  if (isCheckingAuth) return null; // Hindari flash sebelum redirect
+  // Sembunyikan UI sampai auth selesai dicek
+  if (isCheckingAuth) return null;
 
   return (
     <UserProvider>
@@ -65,12 +56,14 @@ export default function MobileLayout({ children }) {
             <TransaksiProvider>
               <SaldoProvider>
                 <div className="mobile-wrapper">
+                  {/* Navbar hanya untuk halaman non‑public */}
                   {!isPublicPage && <NavbarMobile />}
 
                   <div className="mobile-scroll-container">
                     <div className="mobile-content p-3">{children}</div>
                   </div>
 
+                  {/* Bottom nav & Fab hanya untuk halaman non‑public */}
                   {!isPublicPage && (
                     <>
                       <BottomNav onMenuToggle={setIsBottomMenuOpen} />

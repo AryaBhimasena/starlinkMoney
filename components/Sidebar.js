@@ -50,7 +50,8 @@ const Sidebar = ({ isOpen, setIsOpen }) => {
   }, []);
 
   const handleLogout = async () => {
-    await logout(router);
+    sessionStorage.clear();
+	await logout(router);
     router.push("/");
   };
 
@@ -162,15 +163,6 @@ const Sidebar = ({ isOpen, setIsOpen }) => {
                   onClick={handleMenuClick}
                 >
                   Identitas Toko
-                </Link>
-              </li>
-              <li className="nav-item">
-                <Link
-                  href="/pengaturan/jenis-transaksi"
-                  className={`nav-link sidebar-link ${pathname === "/pengaturan/jenis-transaksi" ? "active" : ""}`}
-                  onClick={handleMenuClick}
-                >
-                  Jenis Transaksi
                 </Link>
               </li>
             </ul>

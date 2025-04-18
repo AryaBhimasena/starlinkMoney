@@ -156,7 +156,8 @@ const handleSaveUser = async (userData) => {
     const { user, userData: registeredData } = await registerUser(
       formData.email.trim(),
       formData.password.trim(),
-      formData.name.trim()
+      formData.name.trim(),
+      formData.kontak.trim()
     );
 
     const newUserId = user.uid;

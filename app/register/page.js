@@ -2,17 +2,19 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { createUserWithEmailAndPassword } from "firebase/auth";
-import { auth } from "../../lib/firebaseConfig";
-import Cookies from "js-cookie";
-import { saveUserData } from "../../services/indexedDBService";
+import { newRegisterUser } from '../../services/registerService';
+import { db } from '../../lib/firebaseConfig';  // Pastikan db sudah dikonfigurasi dengan Firebase SDK
+import { collection, doc, setDoc } from 'firebase/firestore';  // Import firestore functions
+import Swal from 'sweetalert2';  // Import SweetAlert2
 
 export default function RegisterPage() {
   const router = useRouter();
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [konfirmasiPassword, setKonfirmasiPassword] = useState("");
-  const [error, setError] = useState("");
+  const [nama, setNama] = useState('');
+  const [email, setEmail] = useState('');
+  const [noWa, setNoWa] = useState('');
+  const [password, setPassword] = useState('');
+  const [konfirmasiPassword, setKonfirmasiPassword] = useState('');
+  const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
@@ -34,17 +36,6 @@ export default function RegisterPage() {
     setCurrentSlide((prev) => (prev + 1) % 3); // 3 slides
   };
 
-  useEffect(() => {
-    const cssPath = "/bootstrap/css/custom.css";
-    if (!document.querySelector(`link[href="${cssPath}"]`)) {
-      const link = document.createElement("link");
-      link.rel = "stylesheet";
-      link.href = cssPath;
-      document.head.appendChild(link);
-      console.log("✅ Custom CSS berhasil dimuat:", cssPath);
-    }
-  }, []);
-
   // 👉 Carousel Auto Scroll
   useEffect(() => {
     if (paused) return;
@@ -53,7 +44,6 @@ export default function RegisterPage() {
     }, 5000);
     return () => clearInterval(interval);
   }, [paused, currentSlide]);
-
 
   const handleRegister = async (e) => {
     e.preventDefault();
@@ -64,23 +54,29 @@ export default function RegisterPage() {
       return;
     }
 
-    try {
-      setLoading(true);
-      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-      const token = await userCredential.user.getIdToken(true);
-      Cookies.set("token", token, { expires: 1 });
+	const result = await Swal.fire({
+      title: "Konfirmasi Data Anda",
+      html: `
+        <p><strong>Nama:</strong> ${nama}</p>
+        <p><strong>Email:</strong> ${email}</p>
+        <p><strong>Nomor WA:</strong> ${noWa}</p>
+        <p>Apakah data Anda sudah benar?</p>
+      `,
+      icon: "question",
+      showCancelButton: true,
+      confirmButtonText: "Konfirmasi",
+      cancelButtonText: "Batal",
+    });
 
-      await saveUserData(userCredential.user.uid);
-      router.push("/dashboard");
+    if (!result.isConfirmed) return;
+
+    try {
+      const uid = await newRegisterUser(email, password, nama, noWa);
+      Swal.fire("Sukses", "Pendaftaran berhasil! Mohon tunggu konfirmasi CS.", "success");
+      router.push("/");
     } catch (err) {
-      console.error("❌ Error saat registrasi:", err);
-      if (err.code === "auth/email-already-in-use") {
-        setError("Email sudah digunakan.");
-      } else {
-        setError("Terjadi kesalahan saat registrasi.");
-      }
-    } finally {
-      setLoading(false);
+      console.error(err);
+      setError(err.message || "Gagal membuat akun.");
     }
   };
 
@@ -190,7 +186,19 @@ export default function RegisterPage() {
         {error && <div className="alert alert-danger alert-login">{error}</div>}
 
         <form onSubmit={handleRegister}>
-          <div className="form-group">
+		  <div className="form-group">
+            <label className="form-label">Nama</label>
+            <input
+              type="text"
+              className="form-control"
+              value={nama}
+              onChange={(e) => setNama(e.target.value)}
+              required
+              placeholder="Nama Lengkap"
+              autoFocus
+            />
+          </div>
+		  <div className="form-group">
             <label className="form-label">Email</label>
             <input
               type="email"
@@ -199,6 +207,18 @@ export default function RegisterPage() {
               onChange={(e) => setEmail(e.target.value)}
               required
               placeholder="Masukkan email"
+              autoFocus
+            />
+          </div>
+          <div className="form-group">
+            <label className="form-label">No HP</label>
+            <input
+              type="text"
+              className="form-control"
+              value={noWa}
+              onChange={(e) => setNoWa(e.target.value)}
+              required
+              placeholder="Nomor WA Aktif"
               autoFocus
             />
           </div>
