@@ -10,6 +10,7 @@ import { TransaksiProvider } from "../context/TransaksiContext";
 import { SaldoProvider } from "../context/SaldoContext";
 import { TokenProvider } from "../context/tokenContext";
 import { UserProvider } from "../context/UserContext";
+import { RegisterProvider } from "../context/RegisterContext";
 
 import "../public/bootstrap/css/bootstrap.min.css";
 import "../public/bootstrap/css/custom.css";
@@ -70,12 +71,13 @@ export default function RootLayout({ children }) {
   }
 
   // 3) Desktop layout utama
-  return (
-    <html lang="id">
-      <head>
-        <meta name="viewport" content="width=device-width, initial-scale=1" />
-      </head>
-      <body className="root-layout">
+return (
+  <html lang="id">
+    <head>
+      <meta name="viewport" content="width=device-width, initial-scale=1" />
+    </head>
+    <body className="root-layout">
+      <RegisterProvider> {/* ✅ Tambahkan ini */}
         <UserProvider>
           <IndexedDBProvider>
             <TokenProvider>
@@ -93,7 +95,8 @@ export default function RootLayout({ children }) {
             </TokenProvider>
           </IndexedDBProvider>
         </UserProvider>
-      </body>
-    </html>
-  );
+      </RegisterProvider> {/* ✅ Penutup */}
+    </body>
+  </html>
+);
 }

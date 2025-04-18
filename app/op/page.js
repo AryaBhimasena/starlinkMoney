@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useContext } from "react";
 import {
   collection,
   query,
@@ -13,58 +13,16 @@ import {
 } from "firebase/firestore";
 import { db } from "../../lib/firebaseConfig";
 import { getUserData } from "../../services/indexedDBService";
+import { RegisterContext } from "../../context/RegisterContext"; // sesuaikan path
+
 
 export default function OperatorPage() {
-  const [dataMenunggu, setDataMenunggu] = useState([]);
-  const [dataBerhasil, setDataBerhasil] = useState([]);
   const [entitasIdPengakses, setEntitasIdPengakses] = useState(null);
   const [processed, setProcessed] = useState({}); // untuk tracking data per entitasId
-  
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const userData = await getUserData("userData", "Email");
-        const entitasId = userData?.entitasId;
-        setEntitasIdPengakses(entitasId);
-
-        const querySnapshot = await getDocs(collection(db, "newRegistrar"));
-
-        const menunggu = [];
-        const berhasil = [];
-
-        querySnapshot.forEach((docSnap) => {
-          const item = docSnap.data();
-          const status = item.status || "";
-
-          const data = {
-            id: docSnap.id,
-            tanggal: item.createdAt?.toDate?.().toLocaleDateString("id-ID") || "-",
-            nama: item.nama || "-",
-            email: item.email || "-",
-            noWa: item.noWa || "-",
-            role: item.role || "admin",
-            entitasId: item.entitasId || null,
-            uid: item.uid || null,
-          };
-
-          if (status === "menunggu-konfirmasi") {
-            menunggu.push(data);
-          } else if (status === "berhasil-ditambahkan") {
-            berhasil.push(data);
-          }
-        });
-
-        setDataMenunggu(menunggu);
-        setDataBerhasil(berhasil);
-      } catch (error) {
-        console.error("Gagal mengambil data:", error);
-      }
-    };
-
-    fetchData();
-  }, []);
+  const { dataMenunggu, dataBerhasil } = useContext(RegisterContext);
 
   const handleTambahUsers = async (item) => {
+  const entitasId = item.entitasId || item.uid;
 
   const newUserData = {
     name: item.nama,
@@ -118,9 +76,6 @@ export default function OperatorPage() {
           createdAt: serverTimestamp(),
         });
 
-        // Refresh data
-        setDataMenunggu((prev) => prev.filter((row) => row.id !== item.id));
-        setDataBerhasil((prev) => [...prev, item]);
       }
     } catch (err) {
       console.error("Gagal menambahkan ke token:", err);
