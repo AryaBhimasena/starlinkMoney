@@ -1,6 +1,5 @@
-Folder PATH listing
-Volume serial number is E2A3-DDD3
-C:.
+STRUKTUR APP/
+
 |   favicon.ico
 |   globals.css
 |   layout.js

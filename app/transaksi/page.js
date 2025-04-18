@@ -295,39 +295,50 @@ const PageTransaksi = () => {
         <div className="card shadow-sm p-3">
           <div className="card-body">
             {/* tombol + dropdown */}
-            <div className="d-flex justify-content-end mb-3" style={{ position: "relative" }}>
-			{/* Tombol Mutasi Saldo hanya jika user adalah superadmin */}
-			{role === "superadmin" && (
-			  <button className="mutasi-saldo-btn-container btn btn-outline-primary" onClick={handleMutasiSaldo}>
-				  Mutasi Saldo
-				</button>
-			)}
-              <button
-                className="btn btn-primary"
-                onClick={toggleDropdown}
-                ref={buttonRef}
-              >
-                Tambah Transaksi
-              </button>
-              {isDropdownOpen && (
-                <div className="transaksi-type-selector" ref={dropdownRef}>
-                  <ul>
-                    <li onClick={() => handleTypeSelect("Transfer/Setor Tunai/Tarik Tunai")}>
-                      Transfer/Setor Tunai/Tarik Tunai
-                    </li>
-                    <li onClick={() => handleTypeSelect("Top Up Pulsa Telepon")}>
-                      Top Up Pulsa Telepon
-                    </li>
-                    <li onClick={() => handleTypeSelect("Top Up Token Listrik")}>
-                      Top Up Token Listrik
-                    </li>
-                    <li onClick={() => handleTypeSelect("Top Up E-Wallet")}>
-                      Top Up E-Wallet
-                    </li>
-                  </ul>
-                </div>
-              )}
-            </div>
+				<div className="d-flex justify-content-between align-items-center mb-3" style={{ position: "relative" }}>
+				  {/* Pesan di kiri */}
+				  <small className="text-muted">
+					*Jika saldo tidak tersedia, harap tambah sumber dana terlebih dahulu&nbsp;
+					<a href="pengaturan/sumberDana">disini</a>.
+				  </small>
+
+				  {/* Tombol-tombol di kanan */}
+				  <div className="d-flex gap-2">
+					{role === "superadmin" && (
+					  <button className="mutasi-saldo-btn-container btn btn-outline-primary" onClick={handleMutasiSaldo}>
+						Mutasi Saldo
+					  </button>
+					)}
+					<button
+					  className="btn btn-primary"
+					  onClick={toggleDropdown}
+					  ref={buttonRef}
+					>
+					  Tambah Transaksi
+					</button>
+				  </div>
+
+				  {/* Dropdown-nya tetap di luar biar posisinya fixed dengan button */}
+				  {isDropdownOpen && (
+					<div className="transaksi-type-selector" ref={dropdownRef}>
+					  <ul>
+						<li onClick={() => handleTypeSelect("Transfer/Setor Tunai/Tarik Tunai")}>
+						  Transfer/Setor Tunai/Tarik Tunai
+						</li>
+						<li onClick={() => handleTypeSelect("Top Up Pulsa Telepon")}>
+						  Top Up Pulsa Telepon
+						</li>
+						<li onClick={() => handleTypeSelect("Top Up Token Listrik")}>
+						  Top Up Token Listrik
+						</li>
+						<li onClick={() => handleTypeSelect("Top Up E-Wallet")}>
+						  Top Up E-Wallet
+						</li>
+					  </ul>
+					</div>
+				  )}
+				</div>
+
 			
 		    <MiniBankModal
 			  show={showMiniBankModal}

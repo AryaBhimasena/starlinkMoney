@@ -117,9 +117,13 @@ export const hapusSumberDana = async (sumberDanaId) => {
       throw new Error("❌ Sumber dana 'Uang Kas' tidak dapat dihapus!");
     }
 
-    // Melakukan penghapusan sumber dana
+    // 🔥 Hapus dokumen dari sumber_dana
     await deleteDocById("sumber_dana", sumberDanaId);
-    console.log("✅ Sumber dana berhasil dihapus.");
+
+    // 🔥 Hapus juga dari koleksi saldo (ID sama)
+    await deleteDocById("saldo", sumberDanaId);
+
+    console.log("✅ Sumber dana dan saldo terkait berhasil dihapus.");
   } catch (error) {
     console.error("❌ Gagal menghapus sumber dana:", error);
     throw error;

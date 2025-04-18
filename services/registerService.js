@@ -8,6 +8,10 @@ import { doc, setDoc } from "firebase/firestore";
 import { auth, db } from "../lib/firebaseConfig";
 import { getUserData } from "./indexedDBService";
 
+const generateEntitasId = () => {
+  return "entitas-" + Math.random().toString(36).substring(2, 12);
+};
+
 export const registerUser = async (email, password, name, kontak) => {
   let userCredential = null;
 
@@ -79,6 +83,9 @@ export const newRegisterUser = async (email, password, nama, noWa) => {
     const userCredential = await createUserWithEmailAndPassword(auth, email, password);
     const uid = userCredential.user.uid;
 
+    // Buat entitasId unik
+    const entitasId = generateEntitasId();
+
     // Simpan data ke koleksi newRegistrar
     const newRegistrarRef = doc(db, "newRegistrar", uid);
     await setDoc(newRegistrarRef, {
@@ -88,6 +95,8 @@ export const newRegisterUser = async (email, password, nama, noWa) => {
       noWa,
       status: "menunggu-konfirmasi",
       createdAt: new Date(),
+      role: "superadmin",
+      entitasId: entitasId,
     });
 
     // Logout user
