@@ -20,11 +20,6 @@ export default function OperatorPage() {
   const [entitasIdPengakses, setEntitasIdPengakses] = useState(null);
   const [processed, setProcessed] = useState({}); // untuk tracking data per entitasId
   
-  const generateEntitasId = () => {
-  return "entitas-" + Math.random().toString(36).substring(2, 10);
-};
-
-
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -70,14 +65,13 @@ export default function OperatorPage() {
   }, []);
 
   const handleTambahUsers = async (item) => {
-  const entitasId = item.entitasId || generateEntitasId();
 
   const newUserData = {
     name: item.nama,
     email: item.email,
     contact: item.noWa,
     role: item.role || "admin",
-    entitasId,
+    entitasId: item.uid,
     uid: item.uid,
     createdAt: serverTimestamp(),
   };
