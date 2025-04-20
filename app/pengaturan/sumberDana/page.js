@@ -54,6 +54,52 @@ const SumberDana = () => {
   useEffect(() => {
     setIsFormValid(sumberDana.trim() && !isNaN(parseFloat(nominal)) && parseFloat(nominal) >= 0 && entitasId);
   }, [sumberDana, nominal, entitasId]);
+  
+  const handleAddOrUpdate = async () => {
+  // Cek jika form tidak valid
+  if (!isFormValid) {
+    alert("❌ Data tidak valid! Pastikan semua input terisi dengan benar.");
+    return;
+  }
+
+  // Pastikan nominal menjadi angka yang benar
+  const nominalAmount = parseFloat(nominal);
+  if (isNaN(nominalAmount) || nominalAmount < 0) {
+    alert("❌ Nominal saldo tidak valid.");
+    return;
+  }
+
+  const payload = {
+    sumberDana,
+    kategori,
+    saldo: nominalAmount,
+    entitasId,
+  };
+
+  try {
+    if (isEdit && editId) {
+      // Update sumber dana jika sedang dalam mode edit
+      await updateSumberDana(editId, payload);
+    } else {
+      // Tambah sumber dana dan saldo baru
+      await tambahSumberDana(sumberDana, kategori, nominalAmount);
+    }
+
+    // Reset form setelah berhasil
+    setShowModal(false);
+    setSumberDana("");
+    setNominal("");
+    setEditId(null);
+    setIsEdit(false);
+
+    // Refresh data sumber dana
+    const refreshed = await getSumberDanaByEntitas(entitasId);
+    setData(refreshed);
+  } catch (error) {
+    console.error("❌ Gagal menambah atau mengedit sumber dana:", error);
+    alert("❌ Terjadi kesalahan. Coba lagi.");
+  }
+};
 
   return (
     <>

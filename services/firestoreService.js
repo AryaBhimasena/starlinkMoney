@@ -142,10 +142,8 @@ export const addDocToCollection = async (collectionName, data, transaction = nul
       await setDoc(docRef, data);
     }
 
-    console.log(`Dokumen berhasil ditambahkan ke koleksi ${collectionName} dengan ID: ${docRef.id}`);
     return { success: true, docId: docRef.id };  // Mengembalikan ID dokumen baru
   } catch (error) {
-    console.error(`Gagal menambahkan dokumen ke koleksi ${collectionName}:`, error);
     return { success: false, error: error.message };
   }
 };

@@ -43,6 +43,11 @@ export const tambahSumberDana = async (sumberDana, kategori, saldo) => {
     const user = await getUserData();
     if (!user || !user.entitasId) throw new Error("❌ Pengguna tidak valid atau belum login.");
 
+    // ✅ Validasi role superadmin sesuai Firestore rules
+    if (user.role !== "superadmin") {
+      throw new Error("❌ Hanya superadmin yang diizinkan menambahkan sumber dana.");
+    }
+
     const entitasId = user.entitasId;
     const sumberDanaTrimmed = sumberDana.trim();
     const kategoriTrimmed = kategori.trim();
@@ -54,7 +59,7 @@ export const tambahSumberDana = async (sumberDana, kategori, saldo) => {
     }
 
     // Tambahkan ke koleksi sumber_dana
-    const docId = await addDocToCollection("sumber_dana", {
+    const result = await addDocToCollection("sumber_dana", {
       entitasId,
       sumberDana: sumberDanaTrimmed,
       kategori: kategoriTrimmed,
@@ -62,11 +67,13 @@ export const tambahSumberDana = async (sumberDana, kategori, saldo) => {
       createdAt: new Date(),
     });
 
+    if (!result.success) throw new Error(result.error || "Gagal tambah data");
+
     // Tambahkan ke koleksi saldo
     await addSaldo(entitasId, sumberDanaTrimmed, Number(saldo), kategoriTrimmed, user?.uid || "");
 
-    console.log("✅ Sumber dana dan saldo berhasil ditambahkan:", docId);
-    return docId;
+    console.log("✅ Sumber dana dan saldo berhasil ditambahkan:", result.docId);
+    return result.docId;
   } catch (error) {
     console.error("❌ Gagal menambahkan sumber dana dan saldo:", error);
     throw error;
