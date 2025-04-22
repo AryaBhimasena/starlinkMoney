@@ -41,7 +41,19 @@ export default function TopUpEWalletPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
-  const formatRupiah = (angka) => `Rp${angka.toLocaleString("id-ID")}`;
+  const [formattedForm, setFormattedForm] = useState({
+  nominal: "",
+  tarif: "",
+  admin: "",
+  });
+
+  // Helper
+  const formatToRupiah = (angka) => {
+  const cleanNumber = Number(
+    (typeof angka === "string" ? angka : angka?.toString() || "0").replace(/\D/g, "")
+  );
+  return "Rp" + cleanNumber.toLocaleString("id-ID");
+  };
 
   useEffect(() => {
     const fetchData = async () => {
@@ -63,13 +75,17 @@ export default function TopUpEWalletPage() {
     fetchData();
   }, []);
 
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    setForm((prev) => ({
-      ...prev,
-      [name]: ["nominal", "hargaJual", "hargaModal"].includes(name) ? Number(value) : value,
-    }));
-  };
+    const handleChange = (e) => {
+	  const { name, value } = e.target;
+
+	  if (["nominal", "tarif", "admin"].includes(name)) {
+		const onlyNumber = value.replace(/[^\d]/g, "");
+		setForm((prev) => ({ ...prev, [name]: Number(onlyNumber) }));
+		setFormattedForm((prev) => ({ ...prev, [name]: formatToRupiah(value) }));
+	  } else {
+		setForm((prev) => ({ ...prev, [name]: value }));
+	  }
+	};
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -77,7 +93,7 @@ export default function TopUpEWalletPage() {
     setLoading(true);
 
     if (!entitasId) return alert("Entitas ID belum ditemukan.");
-    if (!form.nominal || !form.sumberDana || !form.namaCustomer || !form.noHp)
+    if (!form.nominal || !form.sumberDana || (!form.namaCustomer && !form.noHp))
       return alert("Lengkapi semua data yang wajib.");
 
     let transaksiBaru = null;
@@ -107,7 +123,7 @@ export default function TopUpEWalletPage() {
         noReff: noReffBaru,
         entitasId,
         createdAt: Date.now(),
-        profit: Number(form.hargaJual) - Number(form.hargaModal),
+        profit: Number(form.tarif),
         namaSumberDana: saldoData.sumberDana,
       };
 
@@ -155,7 +171,7 @@ export default function TopUpEWalletPage() {
               type: "select",
               name: "sumberDana",
               options: saldoList.map((item) => ({
-                label: `${item.sumberDana} - ${formatRupiah(item.saldo)}`,
+                label: `${item.sumberDana} - ${formatToRupiah(item.saldo)}`,
                 value: item.id,
               })),
             },
@@ -169,8 +185,7 @@ export default function TopUpEWalletPage() {
             { label: "Nama Customer", type: "text", name: "namaCustomer" },
             { label: "Nomor HP", type: "text", name: "noHp" },
             { label: "Nominal", type: "number", name: "nominal" },
-            { label: "Harga Jual", type: "number", name: "hargaJual" },
-            { label: "Harga Modal", type: "number", name: "hargaModal" },
+            { label: "Tarif", type: "number", name: "tarif" },
           ].map((field, index) => (
             <div className="mobile-form-row" key={index}>
               <span className="mobile-form-label">{field.label}</span>
@@ -190,13 +205,21 @@ export default function TopUpEWalletPage() {
                 </select>
               ) : (
                 <input
-                  className="mobile-form-input"
-                  type={field.type}
-                  name={field.name}
-                  value={form[field.name]}
-                  onChange={handleChange}
-                  readOnly={field.readOnly || false}
-                />
+				  className="mobile-form-input"
+				  type={
+					["nominal", "tarif", "admin"].includes(field.name)
+					  ? "text"
+					  : field.type
+				  }
+				  name={field.name}
+				  value={
+					["nominal", "tarif", "admin"].includes(field.name)
+					  ? formattedForm[field.name]
+					  : form[field.name]
+				  }
+				  onChange={handleChange}
+				  readOnly={field.readOnly || false}
+				/>
               )}
             </div>
           ))}

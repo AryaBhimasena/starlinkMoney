@@ -77,7 +77,6 @@ return (
       <meta name="viewport" content="width=device-width, initial-scale=1" />
     </head>
     <body className="root-layout">
-      <RegisterProvider> {/* ✅ Tambahkan ini */}
         <UserProvider>
           <IndexedDBProvider>
             <TokenProvider>
@@ -95,7 +94,6 @@ return (
             </TokenProvider>
           </IndexedDBProvider>
         </UserProvider>
-      </RegisterProvider> {/* ✅ Penutup */}
     </body>
   </html>
 );

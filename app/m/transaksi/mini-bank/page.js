@@ -47,9 +47,19 @@ export default function MiniBankPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
+  const [formattedForm, setFormattedForm] = useState({
+  nominal: "",
+  tarif: "",
+  admin: "",
+  });
 
   // Helper
-  const formatRupiah = (angka) => `Rp${angka.toLocaleString("id-ID")}`;
+  const formatToRupiah = (angka) => {
+  const cleanNumber = Number(
+    (typeof angka === "string" ? angka : angka?.toString() || "0").replace(/\D/g, "")
+  );
+  return "Rp" + cleanNumber.toLocaleString("id-ID");
+  };
 
   // useEffect 1: Inisialisasi halaman
   useEffect(() => {
@@ -92,11 +102,15 @@ export default function MiniBankPage() {
 
   // Handle input form
   const handleChange = (e) => {
-    const { name, value } = e.target;
-    setForm((prev) => ({
-      ...prev,
-      [name]: ["nominal", "tarif", "admin"].includes(name) ? Number(value) : value,
-    }));
+  const { name, value } = e.target;
+
+  if (["nominal", "tarif", "admin"].includes(name)) {
+    const onlyNumber = value.replace(/[^\d]/g, "");
+    setForm((prev) => ({ ...prev, [name]: Number(onlyNumber) }));
+    setFormattedForm((prev) => ({ ...prev, [name]: formatToRupiah(value) }));
+  } else {
+    setForm((prev) => ({ ...prev, [name]: value }));
+  }
   };
 
   // Submit form
@@ -189,7 +203,6 @@ export default function MiniBankPage() {
     { label: "Setor Tunai", value: "Setor Tunai" },
   ];
 
-
   return (
     <div className="mobile-mini-bank-container">
       <div className="mobile-mini-bank-header">
@@ -213,7 +226,7 @@ export default function MiniBankPage() {
               type: "select",
               name: "sumberDana",
               options: saldoList.map((item) => ({
-                label: `${item.sumberDana} - ${formatRupiah(item.saldo)}`,
+                label: `${item.sumberDana} - ${formatToRupiah(item.saldo)}`,
                 value: item.id,
               })),
             },
@@ -242,13 +255,21 @@ export default function MiniBankPage() {
                 </select>
               ) : (
                 <input
-                  className="mobile-form-input"
-                  type={field.type}
-                  name={field.name}
-                  value={form[field.name]}
-                  onChange={handleChange}
-                  readOnly={field.readOnly || false}
-                />
+				  className="mobile-form-input"
+				  type={
+					["nominal", "tarif", "admin"].includes(field.name)
+					  ? "text"
+					  : field.type
+				  }
+				  name={field.name}
+				  value={
+					["nominal", "tarif", "admin"].includes(field.name)
+					  ? formattedForm[field.name]
+					  : form[field.name]
+				  }
+				  onChange={handleChange}
+				  readOnly={field.readOnly || false}
+				/>
               )}
             </div>
           ))}

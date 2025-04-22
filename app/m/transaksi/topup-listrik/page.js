@@ -40,7 +40,19 @@ export default function TopUpTokenListrikPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
-  const formatRupiah = (angka) => `Rp${angka.toLocaleString("id-ID")}`;
+  const [formattedForm, setFormattedForm] = useState({
+  nominal: "",
+  hargaJual: "",
+  hargaModal: "",
+  });
+
+  // Helper
+  const formatToRupiah = (angka) => {
+  const cleanNumber = Number(
+    (typeof angka === "string" ? angka : angka?.toString() || "0").replace(/\D/g, "")
+  );
+  return "Rp" + cleanNumber.toLocaleString("id-ID");
+  };
 
   useEffect(() => {
     const fetchData = async () => {
@@ -63,11 +75,15 @@ export default function TopUpTokenListrikPage() {
   }, []);
 
   const handleChange = (e) => {
-    const { name, value } = e.target;
-    setForm((prev) => ({
-      ...prev,
-      [name]: ["nominal", "hargaJual", "hargaModal"].includes(name) ? Number(value) : value,
-    }));
+  const { name, value } = e.target;
+
+  if (["nominal", "hargaJual", "hargaModal"].includes(name)) {
+    const onlyNumber = value.replace(/[^\d]/g, "");
+    setForm((prev) => ({ ...prev, [name]: Number(onlyNumber) }));
+    setFormattedForm((prev) => ({ ...prev, [name]: formatToRupiah(value) }));
+  } else {
+    setForm((prev) => ({ ...prev, [name]: value }));
+  }
   };
 
   const handleSubmit = async (e) => {
@@ -76,8 +92,11 @@ export default function TopUpTokenListrikPage() {
     setLoading(true);
 
     if (!entitasId) return alert("Entitas ID belum ditemukan.");
-    if (!form.nominal || !form.sumberDana || !form.noMeter || !form.idPelanggan)
-      return alert("Lengkapi semua data yang wajib.");
+    if (!form.nominal) return alert("Nominal harus diisi.");
+	if (!form.sumberDana) return alert("Sumber Dana harus dipilih.");
+	if (!form.noMeter && !form.idPelanggan)
+	return alert("Minimal isi salah satu: No Meter atau ID Pelanggan.");
+
 
     let transaksiBaru = null;
     let saldoData = null;
@@ -154,7 +173,7 @@ export default function TopUpTokenListrikPage() {
               type: "select",
               name: "sumberDana",
               options: saldoList.map((item) => ({
-                label: `${item.sumberDana} - ${formatRupiah(item.saldo)}`,
+                label: `${item.sumberDana} - ${formatToRupiah(item.saldo)}`,
                 value: item.id,
               })),
             },
@@ -182,13 +201,21 @@ export default function TopUpTokenListrikPage() {
                 </select>
               ) : (
                 <input
-                  className="mobile-form-input"
-                  type={field.type}
-                  name={field.name}
-                  value={form[field.name]}
-                  onChange={handleChange}
-                  readOnly={field.readOnly || false}
-                />
+				  className="mobile-form-input"
+				  type={
+					["nominal", "hargaJual", "hargaModal"].includes(field.name)
+					  ? "text"
+					  : field.type
+				  }
+				  name={field.name}
+				  value={
+					["nominal", "hargaJual", "hargaModal"].includes(field.name)
+					  ? formattedForm[field.name]
+					  : form[field.name]
+				  }
+				  onChange={handleChange}
+				  readOnly={field.readOnly || false}
+				/>
               )}
             </div>
           ))}
