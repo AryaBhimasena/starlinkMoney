@@ -7,7 +7,12 @@ import {
   updateSumberDana,
   hapusSumberDana,
 } from "../../../../services/sumberDanaService";
+import { 
+	getSaldoByEntitasId, 
+	updateSaldo, 
+	deleteSaldo } from "../../../../services/saldoService";
 import { getUserData } from "../../../../services/indexedDBService";
+import Swal from "sweetalert2";
 
 const MobileSumberDana = () => {
   const [showModal, setShowModal] = useState(false);
@@ -95,22 +100,102 @@ const handleAddOrUpdate = async () => {
   }
 };
 
-  const handleEdit = (item) => {
-    setSumberDana(item.sumberDana);
-    setKategori(item.kategori);
-    setNominal(item.saldo);
-    setEditId(item.id);
-    setIsEdit(true);
-    setShowModal(true);
-  };
+// Handle Edit saldo
+const handleEdit = async (item) => {
+  try {
+    const user = await getUserData();
+    if (!user) throw new Error("❌ Pengguna tidak terautentikasi.");
 
-  const handleDelete = async (id, nama) => {
-    if (confirm(`Hapus sumber dana "${nama}"?`)) {
-      await hapusSumberDana(id);
-      const refreshed = await getSumberDanaByEntitas(entitasId);
-      setData(refreshed);
-    }
-  };
+    const sumberDanaList = await getSumberDanaByEntitas(user.entitasId);
+    const sumberDana = sumberDanaList.find((sd) => sd.sumberDana === item.sumberDana);
+    const saldoAwal = sumberDana ? parseFloat(sumberDana.saldo) : 0;
+
+    const saldoList = await getSaldoByEntitasId(user.entitasId);
+    const saldoDoc = saldoList.find((s) => s.sumberDana === item.sumberDana);
+    const saldoSaatIni = saldoDoc ? parseFloat(saldoDoc.saldo) : 0;
+
+    const { value: penyesuaian } = await Swal.fire({
+      title: `Edit Saldo: ${item.sumberDana}`,
+      html:
+        `<p><strong>Saldo Awal:</strong> Rp ${saldoAwal.toLocaleString()}</p>` +
+        `<p><strong>Saldo Saat Ini:</strong> Rp ${saldoSaatIni.toLocaleString()}</p>` +
+        `<p><em>Jika ingin mengurangi saldo, tambahkan (-) minus di depan nominal, contoh: -1.000.000</em></p>` +
+        `<input type="text" id="swal-input1" class="swal2-input" placeholder="Penyesuaian Saldo (±)">`,
+      showCancelButton: true,
+      confirmButtonText: 'Simpan',
+      cancelButtonText: 'Batal',
+      preConfirm: () => {
+        let val = document.getElementById("swal-input1").value;
+        val = val.replace(/[^\d\,-]/g, ''); // Menghapus karakter selain angka dan koma
+        val = val.replace(/\./g, ''); // Menghapus titik
+        val = parseFloat(val.replace(',', '.'));
+        if (isNaN(val)) {
+          Swal.showValidationMessage("Masukkan angka penyesuaian yang valid");
+        }
+        return val;
+      }
+    });
+
+    if (penyesuaian == null) return;
+
+    const saldoBaru = saldoAwal + penyesuaian;
+    const saldoSaatIniBaru = saldoSaatIni + penyesuaian;
+
+    await updateSumberDana(sumberDana.id, {
+      sumberDana: item.sumberDana,
+      kategori: item.kategori,
+      saldo: saldoBaru,
+    });
+
+    await updateSaldo(user.entitasId, saldoDoc.id, saldoSaatIniBaru);
+
+    Swal.fire(
+      'Berhasil!',
+      `Saldo telah disesuaikan: Rp ${saldoAwal.toLocaleString()} → Rp ${saldoBaru.toLocaleString()}`,
+      'success'
+    );
+
+    const refreshedSumberDana = await getSumberDanaByEntitas(user.entitasId);
+    setData(refreshedSumberDana);
+
+  } catch (error) {
+    console.error("❌ Error saat edit saldo:", error);
+    Swal.fire('Error', 'Gagal memperbarui saldo sumber dana.', 'error');
+  }
+};
+
+const handleDelete = async (itemId, sumberDana) => {
+  try {
+    const user = await getUserData();
+    if (!user) throw new Error("❌ Pengguna tidak terautentikasi.");
+
+    // Tanyakan konfirmasi penghapusan
+    const { value: confirmed } = await Swal.fire({
+      title: `Anda yakin ingin menghapus sumber dana ${sumberDana}?`,
+      text: "Penghapusan ini akan menghapus sumber dana dan saldo terkait.",
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonText: 'Hapus',
+      cancelButtonText: 'Batal'
+    });
+
+    if (!confirmed) return; // Jika tidak dikonfirmasi, keluar dari fungsi
+
+    // Hapus sumber dana dan saldo terkait
+    await hapusSumberDana(itemId); // Hapus sumber dana
+    await deleteSaldo(user.entitasId, sumberDana); // Hapus saldo terkait
+
+    // Notifikasi sukses
+    Swal.fire('Berhasil!', `Sumber dana ${sumberDana} beserta saldo telah dihapus.`, 'success');
+
+    // Refresh tabel sumber dana setelah penghapusan
+    const refreshedSumberDana = await getSumberDanaByEntitas(user.entitasId);
+    setData(refreshedSumberDana);
+  } catch (error) {
+    console.error("❌ Gagal menghapus sumber dana:", error);
+    Swal.fire('Error', 'Gagal menghapus sumber dana dan saldo terkait.', 'error');
+  }
+};
 
   return (
     <div className="sumber-dana-container">

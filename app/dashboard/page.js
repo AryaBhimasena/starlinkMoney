@@ -73,8 +73,23 @@ export default function HomePage() {
       const hargaModal = parseInt(data.hargaModal || 0);
       const tarif = parseInt(data.tarif || 0);
 
-      const itemProfit = hargaJual - hargaModal;
-      const finalProfit = isNaN(itemProfit) ? tarif : itemProfit;
+      // 1) Ambil langsung profit field, kalau ada
+	  const profitField = data.profit != null
+		? parseFloat(data.profit)
+		: NaN;
+
+	  // 2) Tentukan finalProfit sesuai alur yang diinginkan
+	  let finalProfit;
+	  if (!isNaN(profitField)) {
+		// Langkah 1: pakai profitField bila valid
+		finalProfit = profitField;
+	  } else if (!isNaN(tarif) && tarif !== 0) {
+		// Langkah 2: pakai tarif jika ada dan bukan 0
+		finalProfit = tarif;
+	  } else {
+		// Langkah 3: fallback hitung hargaJual - hargaModal
+		finalProfit = hargaJual - hargaModal;
+	  }
 
       // == Untuk Card Hari Ini ==
       if (tanggalString === tanggalHariIni) {

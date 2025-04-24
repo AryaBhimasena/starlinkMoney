@@ -3,10 +3,11 @@ import {
 	addDocToCollection,
 	getDocById,
 	deleteDocById,
-	updateDocData
+	updateDocData,
 	} from "./firestoreService";
 import { addSaldo } from "./saldoService"; // Pastikan sudah diimpor
 import { getUserData } from "./indexedDBService";
+import { serverTimestamp } from "firebase/firestore";
 
 /**
  * Mengambil seluruh sumber dana yang ada, termasuk "Uang Kas" jika tidak ada
@@ -108,7 +109,7 @@ export const hapusSumberDana = async (sumberDanaId) => {
   if (!sumberDanaId) throw new Error("❌ ID sumber dana diperlukan!");
 
   try {
-    const user = await getCurrentUser();
+    const user = await getUserData();
     if (!user) throw new Error("❌ Pengguna tidak terautentikasi.");
 
     const sumberDana = await getDocById("sumber_dana", sumberDanaId);
@@ -146,7 +147,7 @@ export const updateSumberDana = async (sumberDanaId, data) => {
   }
 
   try {
-    const user = await getCurrentUser();
+    const user = await getUserData();
     if (!user) throw new Error("❌ Pengguna tidak terautentikasi.");
 
     // Mengambil data sumber dana berdasarkan ID

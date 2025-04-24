@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "91658791686",
+    "project_id": "starlink-money",
+    "storage_bucket": "starlink-money.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:91658791686:android:76f563be42b2d478aecc87",
+        "android_client_info": {
+          "package_name": "com.android.starlinkmoney"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "91658791686-mjho1d9mogb508ij29inlou44tmc6ref.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyD-3adLjnzNQWO5rqXSO50YcxBRKZWwy7w"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "91658791686-mjho1d9mogb508ij29inlou44tmc6ref.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
